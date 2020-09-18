@@ -1,6 +1,7 @@
 import pygame
 import consts as c
 from grid import Grid
+from ship import Ship
 
 grid = Grid()
 screen = None
@@ -8,6 +9,15 @@ clock = pygame.time.Clock()
 
 def setup():
     global screen
+
+    ships = []
+    ships.append(Ship((0, 2), (0, 6)))  # carrier (5)
+    ships.append(Ship((2, 4), (2, 7)))  # battleship (4)
+    ships.append(Ship((2, 1), (4, 1)))  # cruiser (3)
+    ships.append(Ship((4, 8), (6, 8)))  # cruiser (3)
+    ships.append(Ship((7, 3), (7, 4)))  # patrol boat (2)
+    for ship in ships:
+        grid.addShip(ship)
 
     pygame.init()
     size = (c.Drawing.WIDTH + c.Drawing.MARGIN) * c.Drawing.SQUARES + c.Drawing.MARGIN
@@ -20,6 +30,7 @@ def display():
     while not done:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                print(grid)
                 done = True
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
