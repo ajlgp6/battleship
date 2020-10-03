@@ -10,8 +10,6 @@ clock = pygame.time.Clock()
 
 # Data for ships that aren't placed
 unplaced = dict()
-dragging = ""       # the ship name that is currently being dragged
-dragOffset = []     # offset position from the upper left point of the ship
 
 def setup():
     global screen
@@ -22,8 +20,8 @@ def setup():
 
     grid_size = (c.Drawing.SIZE + c.Drawing.MARGIN) * c.Drawing.SQUARES + c.Drawing.MARGIN
     
-    # Since the unplaced ships are on the right of the board, we need to add room for three columns of ships
-    width = grid_size + (c.Drawing.SIZE + c.Drawing.MARGIN) * 3 + c.Drawing.MARGIN
+    # Since the unplaced ships are on the right of the board, we need to add room for two columns of ships
+    width = grid_size + c.Drawing.SIZE * 2 + 35
     screen = pygame.display.set_mode([width, grid_size])
 
     # Setup all unplaced ships (carrier, battleship, cruiser 1, cruiser 2, and patrol boat)
@@ -45,8 +43,9 @@ def setup():
 def display():
     global grid_size
     global unplaced
-    global dragging
-    global dragOffset
+
+    dragging = ""       # the ship name that is currently being dragged
+    dragRotate = False
 
     done = False
     while not done:
@@ -59,12 +58,20 @@ def display():
                 pos = pygame.mouse.get_pos()
                 rel_pos = relativeToSquare(pos)
 
-                height = (unplaced[dragging][3] // c.Drawing.SIZE) - 1
+                index = 3
+                if dragRotate:
+                    index = 2
+
+                height = (unplaced[dragging][index] // c.Drawing.SIZE) - 1
+
                 ship_pos = (rel_pos[0] + height, rel_pos[1])
+                if dragRotate:
+                    ship_pos = (rel_pos[0], rel_pos[1] + height)
 
                 grid.addShip(Ship(rel_pos, ship_pos))
                 unplaced.pop(dragging)
                 dragging = ""
+                dragRotate = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 buttons = pygame.mouse.get_pressed()
@@ -104,6 +111,18 @@ def display():
                     unplaced[dragging][0] = pos[0] - c.Drawing.SIZE / 2.5
                     unplaced[dragging][1] = pos[1] - c.Drawing.SIZE / 2.5
 
+            elif event.type == pygame.KEYDOWN:
+                pressed = pygame.key.get_pressed()
+
+                # Rotate dragged ship
+                if (pressed[pygame.K_r] or pressed[pygame.K_e]) and dragging != "":
+                    unplaced[dragging][2], unplaced[dragging][3] = unplaced[dragging][3], unplaced[dragging][2]
+                    dragRotate = not dragRotate
+
+                # Quit
+                elif pressed[pygame.K_q]:
+                    done = True
+
             # Blank the screen
             screen.fill(c.Colors.BLACK)
 
@@ -131,7 +150,7 @@ def display():
                 pygame.draw.rect(screen, c.Colors.SHIP, unplaced[key])
 
             # Render ("flip") the display
-            clock.tick(100)
+            clock.tick(1000)
             pygame.display.flip()
 
 def relativeToSquare(point):
