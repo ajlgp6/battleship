@@ -16,5 +16,5 @@ class Grid:
 
 class Drawing:
     SQUARES = 10
-    WIDTH = 60
+    SIZE = 60
     MARGIN = 1
