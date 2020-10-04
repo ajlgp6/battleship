@@ -18,3 +18,7 @@ class Drawing:
     SQUARES = 10
     SIZE = 60
     MARGIN = 1
+
+class Networking:
+    BIND = "0.0.0.0"
+    PORT = 2313

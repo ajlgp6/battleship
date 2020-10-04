@@ -1,7 +1,8 @@
-import pygame
+import pygame, sys
 import consts as c
+
+from network import Client
 from grid import Grid
-from ship import Ship
 
 grid = Grid()
 grid_size = 0
@@ -11,10 +12,25 @@ clock = pygame.time.Clock()
 # Data for ships that aren't placed
 unplaced = dict()
 
+# Multiplayer
+client = None
+
 def setup():
     global screen
     global grid_size
-    global unplaced
+    global client
+
+    # Connect to the server
+    server = "127.0.0.1"
+    if len(sys.argv) == 2:
+        server = sys.argv[1]
+    print(f"Connecting server at to {server}...")
+
+    client = Client(server)
+    client.send("connect")
+    resp = client.recv()
+    if resp != "connected":
+        exit("Unable to connect to server")
 
     pygame.init()
 
@@ -41,8 +57,7 @@ def setup():
     display()
 
 def display():
-    global grid_size
-    global unplaced
+    global screen
 
     dragging = ""       # the ship name that is currently being dragged
     dragRotate = False
@@ -51,7 +66,6 @@ def display():
     while not done:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                print(grid)
                 done = True
 
             elif event.type == pygame.MOUSEBUTTONUP and dragging != "":
@@ -68,10 +82,16 @@ def display():
                 if dragRotate:
                     ship_pos = (rel_pos[0], rel_pos[1] + height)
 
-                grid.addShip(Ship(rel_pos, ship_pos))
+                client.send(f"ship:{rel_pos[0]},{rel_pos[1]},{ship_pos[0]},{ship_pos[1]}")
                 unplaced.pop(dragging)
                 dragging = ""
                 dragRotate = False
+
+                # Check to see if the window needs to be shrunk
+                if len(unplaced.keys()) == 0:
+                    screen = pygame.display.set_mode([grid_size, grid_size])
+
+                refreshGrid()
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 buttons = pygame.mouse.get_pressed()
@@ -84,21 +104,12 @@ def display():
                     # The user clicked inside the placed ship grid
                     rel_pos = relativeToSquare(screen_pos)
 
-                    state = grid[rel_pos]
-                    newState = c.Grid.EMPTY
-
                     if isLeft:
-                        if state == c.Grid.EMPTY:
-                            newState = c.Grid.MISSED
-                        elif state == c.Grid.SHIP:
-                            newState = c.Grid.SHIP_HIT
-                        else:
-                            warn(f"Unknown grid state {state}")
-                            continue
+                        client.send(f"fire:{rel_pos[0]},{rel_pos[1]}")
+                        refreshGrid()
                     else:
                         warn(f"Unknown mouse button. State of buttons: {buttons}")
                         continue
-                    grid.update(rel_pos, newState)
                 else:
                     # The user clicked outside the grid and must be attempting to drag a ship
                     ship = relativeToShip(screen_pos)
@@ -108,8 +119,8 @@ def display():
             elif event.type == pygame.MOUSEMOTION:
                 if dragging != "":
                     pos = pygame.mouse.get_pos()
-                    unplaced[dragging][0] = pos[0] - c.Drawing.SIZE / 2.5
-                    unplaced[dragging][1] = pos[1] - c.Drawing.SIZE / 2.5
+                    unplaced[dragging][0] = pos[0] - (c.Drawing.SIZE / 2.5)
+                    unplaced[dragging][1] = pos[1] - (c.Drawing.SIZE / 2.5)
 
             elif event.type == pygame.KEYDOWN:
                 pressed = pygame.key.get_pressed()
@@ -173,6 +184,13 @@ def relativeToShip(point):
         return key
     
     return ""
+
+def refreshGrid():
+    global grid
+
+    client.send("grid")
+    updated = client.recv()
+    grid.load(updated)
 
 # TODO: replace with proper logging library
 def warn(msg):
