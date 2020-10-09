@@ -22,6 +22,8 @@ def setup():
     global screen, grid_size
     global client
 
+    code = input("Enter game code (or blank to create a new game): ")
+
     # Connect to the server
     server = "127.0.0.1"
     if len(sys.argv) == 2:
@@ -30,7 +32,9 @@ def setup():
 
     client = Client(server)
     try:
-        client.connect()
+        joined = client.connect(code)
+        if code == "":
+            print(f"Created game {joined}")
     except Exception as ex:
         exit(f"Unable to connect to server: {ex}")
 
@@ -64,6 +68,8 @@ def display():
 
     dragging = ""       # the ship name that is currently being dragged
     dragRotate = False
+    count = 0
+    temp = False
 
     done = False
     while not done:
@@ -105,11 +111,11 @@ def display():
                     rel_pos = relativeToSquare(screen_pos)
 
                     if isLeft:
+                        temp = True
                         client.fire(rel_pos)
-                        refreshGrid()
+                        refreshGrid(True)
                     else:
                         warn(f"Unknown mouse button. State of buttons: {buttons}")
-                        refreshGrid(True)
                         continue
                 else:
                     # The user clicked outside the grid and must be attempting to drag a ship
@@ -135,8 +141,8 @@ def display():
                 elif pressed[pygame.K_q]:
                     done = True
 
-                # Use ships from template
-                elif pressed[pygame.K_t]:
+                # Use ships from template 1
+                elif pressed[pygame.K_1] and len(unplaced) == 5:
                     client.placeShip((0, 2), (0, 6))        # carrier
                     client.placeShip((2, 4), (2, 7))        # battleship
                     client.placeShip((2, 1), (4, 1))        # cruiser
@@ -146,15 +152,33 @@ def display():
 
                     checkUnplaced()
 
+                # Use ships from template 2
+                elif pressed[pygame.K_2] and len(unplaced) == 5:
+                    client.placeShip((5, 8), (9, 8))
+                    client.placeShip((6, 2), (8, 2))
+                    client.placeShip((5, 5), (8, 5))
+                    client.placeShip((6, 0), (7, 0))
+                    client.placeShip((3, 7), (3, 9))
+
+                    unplaced.clear()
+
+                    checkUnplaced()
+
+            count += 1
+            if count >= 10 and allPlaced and temp:
+                print("update")
+                count = 0
+                refreshGrid(True)
+
             # Blank the screen
             screen.fill(c.Colors.BLACK)
 
-            # If there are ships that need to be placed, draw our ships in the main grid
-            if not allPlaced:
-                drawGrid(grid)
-            else:
+            # If all ships have been placed, draw our ships in the upper left and the opponents grid in the main screen
+            if allPlaced:
                 drawGrid(opponent)
                 drawGrid(grid, True)
+            else:
+                drawGrid(grid)                
 
             # Draw the ships (if any) that still need to be dragged into the grid
             for key in unplaced:
@@ -162,6 +186,7 @@ def display():
 
             # Render ("flip") the display
             clock.tick(1000)
+                
             pygame.display.flip()
 
 def relativeToSquare(point):
@@ -188,14 +213,14 @@ def relativeToShip(point):
 def refreshGrid(checkOpponent = False):
     global grid, opponent
 
-    if not checkOpponent:
-        client.updateGrid()
-        updated = client.recv()
-        grid.load(updated)
-    else:
+    client.updateGrid()
+    updated = client.recv()
+    grid.load(updated)
+
+    if checkOpponent:
         client.updateOpponentGrid()
         updated = client.recv()
-        opponent.load(updated)
+        opponent.load(updated)        
 
 def checkUnplaced():
     global screen, allPlaced

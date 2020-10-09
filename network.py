@@ -1,4 +1,4 @@
-import socket, uuid
+import socket, secrets
 import consts as c
 from grid import Grid
 from ship import Ship
@@ -24,27 +24,33 @@ class Server:
             command = data.split(":")
 
             if command[0] == "connect":
-                state = GameState()
-                self.send(f"connected:{state.getId()}", address)
+                code = ""
+                if len(command) >= 1:
+                    code = command[1]
+
+                state = GameState(code)
+                code = state.code   # The code may have been auto generated, so update it from the game state
                 self.clients[address] = state
+
+                self.send(f"connected:{code}", address)
+                print(f"{address} joined game {code}")
                 continue
 
             state = self.clients[address]
             grid = state.grid
 
-            # A client that has already setup their grid is trying to connect again
-            if command[0] == "join":
-                continue
-            
-            # Update the client side grid state. "grid:"
-            elif command[0] == "grid":
+            # Return the client side grid state. "grid:"
+            if command[0] == "grid":
                 self.send(str(grid), address)
             
-            # Update the state of the opponent's grid. "grid-opponent:ID"
-            elif command[0] == "grid-opponent" and len(command) == 2:
-                opponentAddr = self.idToAddress(command[1])
-                opponent = self.clients[opponentAddr].grid
-                self.send(str(opponent), address)
+            # Return the redacted state of the opponent's grid. "grid-opponent:"
+            elif command[0] == "grid-opponent":
+                try:
+                    opponent, addr = self.getOpponentGrid(address)
+                    self.send(opponent.toString(True), address)
+                except ValueError as ex:
+                    print(f"[WRN] {ex}")
+                    self.send("", address)
 
             # Place a new ship. "ship:1,2,1,6"
             elif command[0] == "ship":
@@ -59,18 +65,25 @@ class Server:
                 points = []
                 for i in command[1].split(','):
                     points.append(int(i))
-                
-                current = grid[points]
-                newState = c.Grid.MISSED
-                if current == c.Grid.EMPTY:
-                    newState = c.Grid.MISSED
-                elif current == c.Grid.SHIP:
-                    newState = c.Grid.SHIP_HIT
-                else:
-                    print(f"Unknown current grid state {state}")
-                    continue
 
-                grid.update(points, newState)
+                try:
+                    opponent, addr = self.getOpponentGrid(address)
+                    
+                    current = opponent[points]
+                    newState = c.Grid.MISSED
+                    if current == c.Grid.EMPTY:
+                        newState = c.Grid.MISSED
+                    elif current == c.Grid.SHIP:
+                        newState = c.Grid.SHIP_HIT
+                    else:
+                        print(f"Unknown current grid state {state}")
+                        continue
+
+                    # Update the opponents grid
+                    self.clients[addr].grid.update(points, newState)
+                except ValueError as ex:
+                    print(f"[WRN] {ex}")
+                    self.send("", address)
 
             self.clients[address] = state
 
@@ -78,28 +91,37 @@ class Server:
         print(f"sending \"{raw}\"")
         self.s.sendto(raw.encode('utf-8'), address)
 
-    def idToAddress(self, uuid):
+    # Finds the opponent of an address by searching for a member with the same code but different address
+    def findOpponent(self, address):
+        code = self.clients[address].code
         for addr in self.clients:
-            if self.clients[addr].getId() == uuid:
+            current = self.clients[addr]
+            if current.code == code and addr != address:
                 return addr
         
-        raise ValueError(f"Unable to find client with id {uuid}")
+        raise ValueError(f"Unable to find opponent for {address}")
+
+    def getOpponentGrid(self, address):
+        opponentAddr = self.findOpponent(address)
+        return self.clients[opponentAddr].grid, opponentAddr
 
 class Client:
     def __init__(self, server):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.address = server
 
-    def connect(self):
-        self.send("connect")
+    def connect(self, code):
+        self.send(f"connect:{code}")
         resp = self.recv()
 
-        # Should return "connected:UUID,optional,more,data"
+        # Should return "connected:CODE"
         if resp.find("connected") == -1:
             raise Exception("Failed to receive connection handshake")
         else:
             details = resp.split(':')[1].split(',')
-            self.id = details[0]
+            self.code = details[0]
+
+            return self.code
 
     def send(self, raw):
         if raw.find(':') == -1:
@@ -126,16 +148,19 @@ class Client:
         self.send("grid")
 
     def updateOpponentGrid(self):
-        self.send("grid-opponent:5ad9b6c5-6924-4686-be00-c0ecd353d78a")
+        self.send("grid-opponent")
 
 class GameState:
-    def __init__(self):
+    def __init__(self, code=""):
         self.grid = Grid()
         self.ships = []
-        self.id = str(uuid.uuid4())
+
+        self.code = code
+        if self.code == "":
+            self.code = secrets.token_hex(2)
 
     def __repr__(self):
-        return f"{self.id}: {self.ships}"
+        return f"{self.code}: {self.ships}"
     
     def addShip(self, points):
         first = (points[0], points[1])
@@ -144,9 +169,6 @@ class GameState:
         ship = Ship(first, second)
         self.ships.append(ship)
         self.grid.addShip(ship)
-
-    def getId(self):
-        return self.id
 
 if __name__ == "__main__":
     s = Server()

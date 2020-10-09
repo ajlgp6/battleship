@@ -50,13 +50,20 @@ class Grid:
             s = int(parts[2])
             self.grid[x][y] = s
 
-    def __str__(self):
+    def toString(self, hideShips = False):
         ret = ""
         width = len(self.grid[0])
 
         for i in range(width):
             for j in range(width):
                 state = self.grid[i][j]
+
+                if hideShips and state == c.Grid.SHIP:
+                    state = c.Grid.EMPTY
+                    
                 ret += f"{i},{j},{state};"
 
         return ret[:-1]
+
+    def __str__(self):
+        return self.toString(False)
