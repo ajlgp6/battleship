@@ -36,8 +36,6 @@ class Ship:
         
         self.size = len(self.parts)
 
-        print(f"Initialized ship at {self.start}, {self.end} ({self.size} blocks) coords {self.parts}")
-
     def getParts(self):
         return self.parts
 

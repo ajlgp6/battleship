@@ -11,13 +11,13 @@ clock = pygame.time.Clock()
 
 # Data for ships that aren't placed
 unplaced = dict()
+allPlaced = False
 
 # Multiplayer
 client = None
 
 def setup():
-    global screen
-    global grid_size
+    global screen, grid_size
     global client
 
     # Connect to the server
@@ -27,12 +27,13 @@ def setup():
     print(f"Connecting server at to {server}...")
 
     client = Client(server)
-    client.send("connect")
-    resp = client.recv()
-    if resp != "connected":
-        exit("Unable to connect to server")
+    try:
+        client.connect()
+    except Exception as ex:
+        exit(f"Unable to connect to server: {ex}")
 
     pygame.init()
+    pygame.display.set_caption('Place your ships')
 
     grid_size = (c.Drawing.SIZE + c.Drawing.MARGIN) * c.Drawing.SQUARES + c.Drawing.MARGIN
     
@@ -87,11 +88,8 @@ def display():
                 dragging = ""
                 dragRotate = False
 
-                # Check to see if the window needs to be shrunk
-                if len(unplaced.keys()) == 0:
-                    screen = pygame.display.set_mode([grid_size, grid_size])
-
-                refreshGrid()
+                # Check to see if the window needs to be resized
+                checkUnplaced()
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 buttons = pygame.mouse.get_pressed()
@@ -134,27 +132,24 @@ def display():
                 elif pressed[pygame.K_q]:
                     done = True
 
+                # Use ships from template
+                elif pressed[pygame.K_t]:
+                    client.send(f"ship:0,2,0,6")        # carrier
+                    client.send(f"ship:2,4,2,7")        # battleship
+                    client.send(f"ship:2,1,4,1")        # cruiser
+                    client.send(f"ship:4,8,6,8")        # cruiser
+                    client.send(f"ship:7,3,7,4")        # patrol boat
+                    unplaced.clear()
+
+                    checkUnplaced()
+
             # Blank the screen
             screen.fill(c.Colors.BLACK)
 
             # Draw the ships in the grid
-            for row in range(c.Drawing.SQUARES):
-                for col in range(c.Drawing.SQUARES):
-                    mapping = {
-                        c.Grid.EMPTY: c.Colors.WATER,
-                        c.Grid.SHIP: c.Colors.SHIP,
-                        c.Grid.MISSED: c.Colors.MISS,
-                        c.Grid.SHIP_HIT: c.Colors.SHIP_HIT
-                    }
-
-                    state = grid[(row, col)]
-                    rect = [
-                        (c.Drawing.SIZE + c.Drawing.MARGIN) * col + c.Drawing.MARGIN,
-                        (c.Drawing.SIZE + c.Drawing.MARGIN) * row + c.Drawing.MARGIN,
-                        c.Drawing.SIZE,
-                        c.Drawing.SIZE
-                    ]
-                    pygame.draw.rect(screen, mapping[state], rect)
+            drawGrid(grid)
+            if allPlaced:
+                drawGrid(grid, True)
 
             # Draw the ships (if any) that still need to be dragged into the grid
             for key in unplaced:
@@ -191,6 +186,40 @@ def refreshGrid():
     client.send("grid")
     updated = client.recv()
     grid.load(updated)
+
+def checkUnplaced():
+    global screen, allPlaced
+
+    if len(unplaced.keys()) == 0:
+        screen = pygame.display.set_mode([int(grid_size * 1.47), grid_size])
+        allPlaced = True
+
+    refreshGrid()
+
+def drawGrid(grid, offset=False):
+    size = c.Drawing.SIZE
+    delta = 0
+    if offset:
+        size //= 2.5
+        delta = (c.Drawing.SIZE + c.Drawing.MARGIN) * 10 + 30
+    
+    for row in range(c.Drawing.SQUARES):
+        for col in range(c.Drawing.SQUARES):
+            mapping = {
+                c.Grid.EMPTY: c.Colors.WATER,
+                c.Grid.SHIP: c.Colors.SHIP,
+                c.Grid.MISSED: c.Colors.MISS,
+                c.Grid.SHIP_HIT: c.Colors.SHIP_HIT
+            }
+
+            state = grid[(row, col)]
+            rect = [
+                (size + c.Drawing.MARGIN) * col + c.Drawing.MARGIN + delta,
+                (size + c.Drawing.MARGIN) * row + c.Drawing.MARGIN,
+                size,
+                size
+            ]
+            pygame.draw.rect(screen, mapping[state], rect)
 
 # TODO: replace with proper logging library
 def warn(msg):

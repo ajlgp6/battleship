@@ -1,4 +1,4 @@
-import socket
+import socket, uuid
 import consts as c
 from grid import Grid
 from ship import Ship
@@ -20,17 +20,24 @@ class Server:
             if data.find(":") == -1:
                 print(f"Malformed packet: \"{data}\"")
                 continue
-            elif data == "connect:":
-                self.send("connected", address)
-                self.clients[address] = GameState()
-                continue
 
             command = data.split(":")
+
+            if command[0] == "connect":
+                state = GameState()
+                self.send(f"connected:{state.getId()}", address)
+                self.clients[address] = state
+                continue
+
             state = self.clients[address]
             grid = state.grid
 
+            # A client that has already setup their grid is trying to connect again
+            if command[0] == "join":
+                continue
+            
             # Update the client side grid state. "grid:"
-            if command[0] == "grid":
+            elif command[0] == "grid":
                 self.send(str(grid), address)
 
             # Place a new ship. "ship:1,2,1,6"
@@ -41,7 +48,7 @@ class Server:
                 
                 state.addShip(points)
 
-            # Fire at a grid coordinate
+            # Fire at a grid coordinate. "fire:1,2"
             elif command[0] == "fire":
                 points = []
                 for i in command[1].split(','):
@@ -62,12 +69,24 @@ class Server:
             self.clients[address] = state
 
     def send(self, raw, address):
+        print(f"sending \"{raw}\"")
         self.s.sendto(raw.encode('utf-8'), address)
 
 class Client:
     def __init__(self, server):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.address = server
+
+    def connect(self):
+        self.send("connect")
+        resp = self.recv()
+
+        # Should return "connected:UUID,optional,more,data"
+        if resp.find("connected") == -1:
+            raise Exception("Failed to receive connection handshake")
+        else:
+            details = resp.split(':')[1].split(',')
+            self.id = details[0]
 
     def send(self, raw):
         if raw.find(':') == -1:
@@ -87,6 +106,7 @@ class GameState:
     def __init__(self):
         self.grid = Grid()
         self.ships = []
+        self.id = str(uuid.uuid4())
     
     def addShip(self, points):
         first = (points[0], points[1])
@@ -95,6 +115,9 @@ class GameState:
         ship = Ship(first, second)
         self.ships.append(ship)
         self.grid.addShip(ship)
+
+    def getId(self):
+        return self.id
 
 if __name__ == "__main__":
     s = Server()
