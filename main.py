@@ -5,6 +5,7 @@ from network import Client
 from grid import Grid
 
 grid = Grid()
+opponent = Grid()
 grid_size = 0
 screen = None
 clock = pygame.time.Clock()
@@ -15,6 +16,7 @@ allPlaced = False
 
 # Multiplayer
 client = None
+opponentId = ""
 
 def setup():
     global screen, grid_size
@@ -83,7 +85,7 @@ def display():
                 if dragRotate:
                     ship_pos = (rel_pos[0], rel_pos[1] + height)
 
-                client.send(f"ship:{rel_pos[0]},{rel_pos[1]},{ship_pos[0]},{ship_pos[1]}")
+                client.placeShip(rel_pos, ship_pos)
                 unplaced.pop(dragging)
                 dragging = ""
                 dragRotate = False
@@ -103,10 +105,11 @@ def display():
                     rel_pos = relativeToSquare(screen_pos)
 
                     if isLeft:
-                        client.send(f"fire:{rel_pos[0]},{rel_pos[1]}")
+                        client.fire(rel_pos)
                         refreshGrid()
                     else:
                         warn(f"Unknown mouse button. State of buttons: {buttons}")
+                        refreshGrid(True)
                         continue
                 else:
                     # The user clicked outside the grid and must be attempting to drag a ship
@@ -134,11 +137,11 @@ def display():
 
                 # Use ships from template
                 elif pressed[pygame.K_t]:
-                    client.send(f"ship:0,2,0,6")        # carrier
-                    client.send(f"ship:2,4,2,7")        # battleship
-                    client.send(f"ship:2,1,4,1")        # cruiser
-                    client.send(f"ship:4,8,6,8")        # cruiser
-                    client.send(f"ship:7,3,7,4")        # patrol boat
+                    client.placeShip((0, 2), (0, 6))        # carrier
+                    client.placeShip((2, 4), (2, 7))        # battleship
+                    client.placeShip((2, 1), (4, 1))        # cruiser
+                    client.placeShip((4, 8), (6, 8))        # cruiser
+                    client.placeShip((7, 3), (7, 4))        # patrol boat
                     unplaced.clear()
 
                     checkUnplaced()
@@ -146,9 +149,11 @@ def display():
             # Blank the screen
             screen.fill(c.Colors.BLACK)
 
-            # Draw the ships in the grid
-            drawGrid(grid)
-            if allPlaced:
+            # If there are ships that need to be placed, draw our ships in the main grid
+            if not allPlaced:
+                drawGrid(grid)
+            else:
+                drawGrid(opponent)
                 drawGrid(grid, True)
 
             # Draw the ships (if any) that still need to be dragged into the grid
@@ -180,12 +185,17 @@ def relativeToShip(point):
     
     return ""
 
-def refreshGrid():
-    global grid
+def refreshGrid(checkOpponent = False):
+    global grid, opponent
 
-    client.send("grid")
-    updated = client.recv()
-    grid.load(updated)
+    if not checkOpponent:
+        client.updateGrid()
+        updated = client.recv()
+        grid.load(updated)
+    else:
+        client.updateOpponentGrid()
+        updated = client.recv()
+        opponent.load(updated)
 
 def checkUnplaced():
     global screen, allPlaced

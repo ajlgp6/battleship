@@ -15,10 +15,10 @@ class Server:
         while True:
             raw, address = self.s.recvfrom(4096)
             data = raw.decode('utf-8')
-            print(f"received \"{data}\" from {address}")
+            print(f"{address}:{data}")
             
             if data.find(":") == -1:
-                print(f"Malformed packet: \"{data}\"")
+                print(f"(malformed)")
                 continue
 
             command = data.split(":")
@@ -39,6 +39,12 @@ class Server:
             # Update the client side grid state. "grid:"
             elif command[0] == "grid":
                 self.send(str(grid), address)
+            
+            # Update the state of the opponent's grid. "grid-opponent:ID"
+            elif command[0] == "grid-opponent" and len(command) == 2:
+                opponentAddr = self.idToAddress(command[1])
+                opponent = self.clients[opponentAddr].grid
+                self.send(str(opponent), address)
 
             # Place a new ship. "ship:1,2,1,6"
             elif command[0] == "ship":
@@ -72,6 +78,13 @@ class Server:
         print(f"sending \"{raw}\"")
         self.s.sendto(raw.encode('utf-8'), address)
 
+    def idToAddress(self, uuid):
+        for addr in self.clients:
+            if self.clients[addr].getId() == uuid:
+                return addr
+        
+        raise ValueError(f"Unable to find client with id {uuid}")
+
 class Client:
     def __init__(self, server):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -102,11 +115,27 @@ class Client:
         print(f"received \"{data}\" from {address}")
         return data
 
+    # Helper functions
+    def placeShip(self, start, end):
+        self.send(f"ship:{start[0]},{start[1]},{end[0]},{end[1]}")
+
+    def fire(self, pos):
+        self.send(f"fire:{pos[0]},{pos[1]}")
+
+    def updateGrid(self):
+        self.send("grid")
+
+    def updateOpponentGrid(self):
+        self.send("grid-opponent:5ad9b6c5-6924-4686-be00-c0ecd353d78a")
+
 class GameState:
     def __init__(self):
         self.grid = Grid()
         self.ships = []
         self.id = str(uuid.uuid4())
+
+    def __repr__(self):
+        return f"{self.id}: {self.ships}"
     
     def addShip(self, points):
         first = (points[0], points[1])
