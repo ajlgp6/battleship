@@ -17,10 +17,11 @@ allPlaced = False
 # Multiplayer
 client = None
 opponentId = ""
+doGameLoop = True
 
 def setup():
     global screen, grid_size
-    global client
+    global client, doGameLoop
 
     code = input("Enter game code (or blank to create a new game): ")
 
@@ -65,13 +66,13 @@ def setup():
     displayThread.start()
 
     # Check for updates from the server
-    while True:
+    while doGameLoop:
         client.send("stats")
-        stats = client.recv().split(";")
+        stats = client.recv().split(",")
         if len(stats) < 1:
             continue
 
-        print(stats)
+        client.debug(stats)
 
         try:
             # Opponent ready
@@ -83,17 +84,17 @@ def setup():
         time.sleep(1)
 
 def display():
-    global screen
+    global screen, doGameLoop
 
     dragging = ""       # the ship name that is currently being dragged
     dragRotate = False
 
-    done = False
-    while not done:
+    while doGameLoop:
         event = pygame.event.poll()
 
         if event.type == pygame.QUIT:
-            done = True
+            doGameLoop = False
+            sys.exit(0)
 
         elif event.type == pygame.MOUSEBUTTONUP and dragging != "":
             pos = pygame.mouse.get_pos()
@@ -129,7 +130,8 @@ def display():
                 rel_pos = relativeToSquare(screen_pos)
 
                 if isLeft:
-                    client.fire(rel_pos)
+                    state = client.fire(rel_pos)
+                    opponent.update(rel_pos, state)
                 else:
                     warn(f"Unknown mouse button. State of buttons: {buttons}")
                     continue
@@ -155,7 +157,7 @@ def display():
 
             # Quit
             elif pressed[pygame.K_q]:
-                done = True
+                doGameLoop = False
 
             # Use ships from template 1
             elif pressed[pygame.K_1] and len(unplaced) == 5:

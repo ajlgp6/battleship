@@ -9,6 +9,7 @@ class Ship:
         self.isVertical = False
         self.size = 0
         self.id = str(uuid.uuid4())
+        self.damaged = 0
 
         # Ships can only be in a straight line
         if start[0] != end[0] and start[1] != end[1]:
@@ -47,6 +48,9 @@ class Ship:
 
     def hasSquare(self, point):
         return point in self.parts
+
+    def isAlive(self):
+        return self.damaged < self.size
 
     def __str__(self):
         return f"{self.start} to {self.end}"

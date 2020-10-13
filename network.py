@@ -1,7 +1,15 @@
-import socket, secrets
+import socket, secrets, sys
 import consts as c
 from grid import Grid
 from ship import Ship
+
+isDebug = False
+
+def debug(msg):
+    if not isDebug:
+        return
+
+    print(f"[DBG] {msg}")
 
 class Server:
     def __init__(self):
@@ -15,10 +23,10 @@ class Server:
         while True:
             raw, address = self.s.recvfrom(4096)
             data = raw.decode('utf-8')
-            print(f"{address}:{data}")
+            debug(f"{address}:{data}")
             
             if data.find(":") == -1:
-                print(f"(malformed)")
+                debug(f"(malformed)")
                 continue
 
             command = data.split(":")
@@ -32,7 +40,7 @@ class Server:
                 code = state.code   # The code may have been auto generated, so update it from the game state
                 self.clients[address] = state
 
-                self.send(f"connected:{code}", address)
+                self.send(f"connected:{code},{isDebug}", address)
                 print(f"{address} joined game {code}")
                 continue
 
@@ -81,29 +89,41 @@ class Server:
 
                     # Update the opponents grid
                     self.clients[addr].grid.update(points, newState)
+
+                    # Send back the new state for immediate display
+                    self.send(str(newState), address)
+
                 except ValueError as ex:
                     print(f"[WRN] {ex}")
                     self.send("", address)
 
             # Request an update about the game state. "stats:"
             elif command[0] == "stats":
-                # First number: is the opponent ready?
                 opponentReady = "wait"
+                opponent = None
+                ships = 0
 
+                # First number: is the opponent ready?
                 try:
-                    opponent = self.findOpponent(addr)
-                    if self.clients[opponent].allShipsPlaced():
+                    opponent = self.clients[self.findOpponent(addr)]
+                    if opponent.allShipsPlaced():
                         opponentReady = "ready"
                 except:
                     # Opponent isn't here yet, ignore
                     pass
 
-                self.send(f"{opponentReady};", address)
+                if opponentReady == "ready":
+                    # Second number: number of opponent ships still afloat
+                    for ship in opponent.grid.ships:
+                        if ship.isAlive():
+                            ships += 1
+
+                self.send(f"{opponentReady},{ships}", address)
 
             self.clients[address] = state
 
     def send(self, raw, address):
-        print(f"sending \"{raw}\"")
+        debug(f"sending \"{raw}\"")
         self.s.sendto(raw.encode('utf-8'), address)
 
     # Finds the opponent of an address by searching for a member with the same code but different address
@@ -126,15 +146,19 @@ class Client:
         self.address = server
 
     def connect(self, code):
+        global isDebug
+
         self.send(f"connect:{code}")
         resp = self.recv()
 
-        # Should return "connected:CODE"
+        # Should return "connected:CODE,DEBUG"
         if resp.find("connected") == -1:
             raise Exception("Failed to receive connection handshake")
         else:
             details = resp.split(':')[1].split(',')
+
             self.code = details[0]
+            isDebug = (details[1] == 'True')
 
             return self.code
 
@@ -142,15 +166,18 @@ class Client:
         if raw.find(':') == -1:
             raw += ':'
 
-        print(f"sending \"{raw}\"")
+        debug(f"sending \"{raw}\"")
         data = raw.encode('utf-8')
         self.s.sendto(data, (self.address, c.Networking.PORT))
 
     def recv(self):
         raw, address = self.s.recvfrom(4096)
         data = raw.decode('utf-8')
-        print(f"received \"{data}\" from {address}")
+        debug(f"received \"{data}\" from {address}")
         return data
+
+    def debug(self, msg):
+        debug(msg)
 
     # Helper functions
     def placeShip(self, start, end):
@@ -158,6 +185,7 @@ class Client:
 
     def fire(self, pos):
         self.send(f"fire:{pos[0]},{pos[1]}")
+        return int(self.recv())
 
     def updateGrid(self):
         self.send("grid")
@@ -168,31 +196,26 @@ class Client:
 class GameState:
     def __init__(self, code=""):
         self.grid = Grid()
-        self.ships = []
 
         self.code = code
         if self.code == "":
             self.code = secrets.token_hex(2)
 
     def __repr__(self):
-        return f"{self.code}: {self.ships}"
+        return f"{self.code}: {self.grid.ships}"
     
     def addShip(self, points):
         first = (points[0], points[1])
         second = (points[2], points[3])
 
         ship = Ship(first, second)
-        self.ships.append(ship)
         self.grid.addShip(ship)
 
-        # print("===== added ship =====")
-        # print(self.allShipsPlaced())
-
     def allShipsPlaced(self):
-        count = len(self.ships)
-        print(f"found {count} ships")
-        return count == 5
+        return len(self.grid.ships) == 5
 
 if __name__ == "__main__":
+    isDebug = len(sys.argv) > 1 and sys.argv[1] == "-d"
+
     s = Server()
     s.run()
