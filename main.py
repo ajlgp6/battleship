@@ -1,4 +1,4 @@
-import pygame, sys
+import pygame, sys, time, threading
 import consts as c
 
 from network import Client
@@ -61,133 +61,143 @@ def setup():
     unplaced["cruiser2"] = [initial_x, unplaced["cruiser1"][3] + (c.Drawing.MARGIN * 3), c.Drawing.SIZE, c.Drawing.SIZE * 3]
     unplaced["patrol"] = [initial_x, unplaced["cruiser2"][3] + unplaced["cruiser2"][1] + (c.Drawing.MARGIN * 3), c.Drawing.SIZE, c.Drawing.SIZE * 2]
 
-    display()
+    displayThread = threading.Thread(target = display)
+    displayThread.start()
+
+    # Check for updates from the server
+    while True:
+        client.send("stats")
+        stats = client.recv().split(";")
+        if len(stats) < 1:
+            continue
+
+        print(stats)
+
+        try:
+            # Opponent ready
+            if stats[0] == "ready":
+                refreshGrid(True)
+        except:
+            pass
+
+        time.sleep(1)
 
 def display():
     global screen
 
     dragging = ""       # the ship name that is currently being dragged
     dragRotate = False
-    count = 0
-    temp = False
 
     done = False
     while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        event = pygame.event.poll()
+
+        if event.type == pygame.QUIT:
+            done = True
+
+        elif event.type == pygame.MOUSEBUTTONUP and dragging != "":
+            pos = pygame.mouse.get_pos()
+            rel_pos = relativeToSquare(pos)
+
+            index = 3
+            if dragRotate:
+                index = 2
+
+            height = (unplaced[dragging][index] // c.Drawing.SIZE) - 1
+
+            ship_pos = (rel_pos[0] + height, rel_pos[1])
+            if dragRotate:
+                ship_pos = (rel_pos[0], rel_pos[1] + height)
+
+            client.placeShip(rel_pos, ship_pos)
+            unplaced.pop(dragging)
+            dragging = ""
+            dragRotate = False
+
+            # Check to see if the window needs to be resized
+            checkUnplaced()
+
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            buttons = pygame.mouse.get_pressed()
+            isLeft = buttons[0]
+
+            # pygame returns mouse coordinates relative to the top left of the window
+            # Since we need to map that to the coordinate of a square, divide the mouse coordinates by the square dimensions
+            screen_pos = pygame.mouse.get_pos()
+            if screen_pos[0] < grid_size:
+                # The user clicked inside the placed ship grid
+                rel_pos = relativeToSquare(screen_pos)
+
+                if isLeft:
+                    client.fire(rel_pos)
+                else:
+                    warn(f"Unknown mouse button. State of buttons: {buttons}")
+                    continue
+            else:
+                # The user clicked outside the grid and must be attempting to drag a ship
+                ship = relativeToShip(screen_pos)
+                if ship != "":
+                    dragging = ship
+
+        elif event.type == pygame.MOUSEMOTION:
+            if dragging != "":
+                pos = pygame.mouse.get_pos()
+                unplaced[dragging][0] = pos[0] - (c.Drawing.SIZE / 2.5)
+                unplaced[dragging][1] = pos[1] - (c.Drawing.SIZE / 2.5)
+
+        elif event.type == pygame.KEYDOWN:
+            pressed = pygame.key.get_pressed()
+
+            # Rotate dragged ship
+            if (pressed[pygame.K_r] or pressed[pygame.K_e]) and dragging != "":
+                unplaced[dragging][2], unplaced[dragging][3] = unplaced[dragging][3], unplaced[dragging][2]
+                dragRotate = not dragRotate
+
+            # Quit
+            elif pressed[pygame.K_q]:
                 done = True
 
-            elif event.type == pygame.MOUSEBUTTONUP and dragging != "":
-                pos = pygame.mouse.get_pos()
-                rel_pos = relativeToSquare(pos)
+            # Use ships from template 1
+            elif pressed[pygame.K_1] and len(unplaced) == 5:
+                client.placeShip((0, 2), (0, 6))        # carrier
+                client.placeShip((2, 4), (2, 7))        # battleship
+                client.placeShip((2, 1), (4, 1))        # cruiser
+                client.placeShip((4, 8), (6, 8))        # cruiser
+                client.placeShip((7, 3), (7, 4))        # patrol boat
+                unplaced.clear()
 
-                index = 3
-                if dragRotate:
-                    index = 2
-
-                height = (unplaced[dragging][index] // c.Drawing.SIZE) - 1
-
-                ship_pos = (rel_pos[0] + height, rel_pos[1])
-                if dragRotate:
-                    ship_pos = (rel_pos[0], rel_pos[1] + height)
-
-                client.placeShip(rel_pos, ship_pos)
-                unplaced.pop(dragging)
-                dragging = ""
-                dragRotate = False
-
-                # Check to see if the window needs to be resized
                 checkUnplaced()
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                buttons = pygame.mouse.get_pressed()
-                isLeft = buttons[0]
+            # Use ships from template 2
+            elif pressed[pygame.K_2] and len(unplaced) == 5:
+                client.placeShip((5, 8), (9, 8))
+                client.placeShip((6, 2), (8, 2))
+                client.placeShip((5, 5), (8, 5))
+                client.placeShip((6, 0), (7, 0))
+                client.placeShip((3, 7), (3, 9))
 
-                # pygame returns mouse coordinates relative to the top left of the window
-                # Since we need to map that to the coordinate of a square, divide the mouse coordinates by the square dimensions
-                screen_pos = pygame.mouse.get_pos()
-                if screen_pos[0] < grid_size:
-                    # The user clicked inside the placed ship grid
-                    rel_pos = relativeToSquare(screen_pos)
+                unplaced.clear()
 
-                    if isLeft:
-                        temp = True
-                        client.fire(rel_pos)
-                        refreshGrid(True)
-                    else:
-                        warn(f"Unknown mouse button. State of buttons: {buttons}")
-                        continue
-                else:
-                    # The user clicked outside the grid and must be attempting to drag a ship
-                    ship = relativeToShip(screen_pos)
-                    if ship != "":
-                        dragging = ship
+                checkUnplaced()
 
-            elif event.type == pygame.MOUSEMOTION:
-                if dragging != "":
-                    pos = pygame.mouse.get_pos()
-                    unplaced[dragging][0] = pos[0] - (c.Drawing.SIZE / 2.5)
-                    unplaced[dragging][1] = pos[1] - (c.Drawing.SIZE / 2.5)
+        # Blank the screen
+        screen.fill(c.Colors.BLACK)
 
-            elif event.type == pygame.KEYDOWN:
-                pressed = pygame.key.get_pressed()
+        # If all ships have been placed, draw our ships in the upper left and the opponents grid in the main screen
+        if allPlaced:
+            drawGrid(opponent)
+            drawGrid(grid, True)
+        else:
+            drawGrid(grid)                
 
-                # Rotate dragged ship
-                if (pressed[pygame.K_r] or pressed[pygame.K_e]) and dragging != "":
-                    unplaced[dragging][2], unplaced[dragging][3] = unplaced[dragging][3], unplaced[dragging][2]
-                    dragRotate = not dragRotate
+        # Draw the ships (if any) that still need to be dragged into the grid
+        for key in unplaced:
+            pygame.draw.rect(screen, c.Colors.SHIP, unplaced[key])
 
-                # Quit
-                elif pressed[pygame.K_q]:
-                    done = True
-
-                # Use ships from template 1
-                elif pressed[pygame.K_1] and len(unplaced) == 5:
-                    client.placeShip((0, 2), (0, 6))        # carrier
-                    client.placeShip((2, 4), (2, 7))        # battleship
-                    client.placeShip((2, 1), (4, 1))        # cruiser
-                    client.placeShip((4, 8), (6, 8))        # cruiser
-                    client.placeShip((7, 3), (7, 4))        # patrol boat
-                    unplaced.clear()
-
-                    checkUnplaced()
-
-                # Use ships from template 2
-                elif pressed[pygame.K_2] and len(unplaced) == 5:
-                    client.placeShip((5, 8), (9, 8))
-                    client.placeShip((6, 2), (8, 2))
-                    client.placeShip((5, 5), (8, 5))
-                    client.placeShip((6, 0), (7, 0))
-                    client.placeShip((3, 7), (3, 9))
-
-                    unplaced.clear()
-
-                    checkUnplaced()
-
-            count += 1
-            if count >= 10 and allPlaced and temp:
-                print("update")
-                count = 0
-                refreshGrid(True)
-
-            # Blank the screen
-            screen.fill(c.Colors.BLACK)
-
-            # If all ships have been placed, draw our ships in the upper left and the opponents grid in the main screen
-            if allPlaced:
-                drawGrid(opponent)
-                drawGrid(grid, True)
-            else:
-                drawGrid(grid)                
-
-            # Draw the ships (if any) that still need to be dragged into the grid
-            for key in unplaced:
-                pygame.draw.rect(screen, c.Colors.SHIP, unplaced[key])
-
-            # Render ("flip") the display
-            clock.tick(1000)
-                
-            pygame.display.flip()
+        # Render ("flip") the display
+        clock.tick(1000)
+            
+        pygame.display.flip()
 
 def relativeToSquare(point):
     divisor = c.Drawing.SIZE + c.Drawing.MARGIN

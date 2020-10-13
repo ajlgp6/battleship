@@ -85,6 +85,21 @@ class Server:
                     print(f"[WRN] {ex}")
                     self.send("", address)
 
+            # Request an update about the game state. "stats:"
+            elif command[0] == "stats":
+                # First number: is the opponent ready?
+                opponentReady = "wait"
+
+                try:
+                    opponent = self.findOpponent(addr)
+                    if self.clients[opponent].allShipsPlaced():
+                        opponentReady = "ready"
+                except:
+                    # Opponent isn't here yet, ignore
+                    pass
+
+                self.send(f"{opponentReady};", address)
+
             self.clients[address] = state
 
     def send(self, raw, address):
@@ -169,6 +184,14 @@ class GameState:
         ship = Ship(first, second)
         self.ships.append(ship)
         self.grid.addShip(ship)
+
+        # print("===== added ship =====")
+        # print(self.allShipsPlaced())
+
+    def allShipsPlaced(self):
+        count = len(self.ships)
+        print(f"found {count} ships")
+        return count == 5
 
 if __name__ == "__main__":
     s = Server()
