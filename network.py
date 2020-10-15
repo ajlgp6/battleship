@@ -65,8 +65,12 @@ class Server:
                 points = []
                 for i in command[1].split(','):
                     points.append(int(i))
-                
-                state.addShip(points)
+
+                try:                
+                    state.addShip(points)
+                    self.send("ok", address)
+                except IndexError:
+                    self.send("error", address)
 
             # Fire at a grid coordinate. "fire:1,2"
             elif command[0] == "fire":
@@ -95,7 +99,7 @@ class Server:
 
                 except ValueError as ex:
                     print(f"[WRN] {ex}")
-                    self.send("", address)
+                    self.send("-1", address)
 
             # Request an update about the game state. "stats:"
             elif command[0] == "stats":
@@ -182,6 +186,7 @@ class Client:
     # Helper functions
     def placeShip(self, start, end):
         self.send(f"ship:{start[0]},{start[1]},{end[0]},{end[1]}")
+        return self.recv() == "ok"
 
     def fire(self, pos):
         self.send(f"fire:{pos[0]},{pos[1]}")

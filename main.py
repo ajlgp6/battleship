@@ -87,7 +87,7 @@ def display():
     global screen, doGameLoop
 
     dragging = ""       # the ship name that is currently being dragged
-    dragRotate = False
+    dragRotate = False  # if the current ship has been rotated
 
     while doGameLoop:
         event = pygame.event.poll()
@@ -110,8 +110,9 @@ def display():
             if dragRotate:
                 ship_pos = (rel_pos[0], rel_pos[1] + height)
 
-            client.placeShip(rel_pos, ship_pos)
-            unplaced.pop(dragging)
+            if client.placeShip(rel_pos, ship_pos):
+                unplaced.pop(dragging)
+
             dragging = ""
             dragRotate = False
 
@@ -131,7 +132,8 @@ def display():
 
                 if isLeft:
                     state = client.fire(rel_pos)
-                    opponent.update(rel_pos, state)
+                    if state != -1:
+                        opponent.update(rel_pos, state)
                 else:
                     warn(f"Unknown mouse button. State of buttons: {buttons}")
                     continue
