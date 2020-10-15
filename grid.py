@@ -1,4 +1,5 @@
 import consts as c
+from ship import Ship
 
 class Grid:
     """Tracks the state of a battleship grid."""
@@ -36,9 +37,10 @@ class Grid:
         self.grid[x][y] = newState
 
         if newState == c.Grid.SHIP_HIT:
-            for ship in self.ships:
-                if ship.hasSquare(index):
-                    print(f"Hit on ship of length {ship.getSize()}")
+           for ship in self.ships:
+               if ship.hasSquare(index):
+                    print(f"Hit on ship {ship.getID()} of length {ship.getSize()} at {index}")
+                    ship.damaged += 1
 
     # Serialization
     def load(self, state):
@@ -49,17 +51,20 @@ class Grid:
             s = int(parts[2])
             self.grid[x][y] = s
 
-    def __str__(self):
+    def toString(self, hideShips = False):
         ret = ""
         width = len(self.grid[0])
 
         for i in range(width):
             for j in range(width):
                 state = self.grid[i][j]
-                if state != c.Grid.EMPTY:
-                    ret += f"{i},{j},{state};"
 
-        for ship in self.ships:
-            print(f"ship: {ship}")
+                if hideShips and state == c.Grid.SHIP:
+                    state = c.Grid.EMPTY
+                    
+                ret += f"{i},{j},{state};"
 
         return ret[:-1]
+
+    def __str__(self):
+        return self.toString(False)

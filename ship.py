@@ -1,4 +1,5 @@
 import consts as c
+import uuid
 
 class Ship:
     def __init__(self, start, end):
@@ -7,6 +8,8 @@ class Ship:
         self.parts = []
         self.isVertical = False
         self.size = 0
+        self.id = str(uuid.uuid4())
+        self.damaged = 0
 
         # Ships can only be in a straight line
         if start[0] != end[0] and start[1] != end[1]:
@@ -34,16 +37,20 @@ class Ship:
         
         self.size = len(self.parts)
 
-        print(f"Initialized ship at {self.start}, {self.end} ({self.size} blocks) coords {self.parts}")
-
     def getParts(self):
         return self.parts
 
     def getSize(self):
         return self.size
 
+    def getID(self):
+        return self.id
+
     def hasSquare(self, point):
         return point in self.parts
+
+    def isAlive(self):
+        return self.damaged < self.size
 
     def __str__(self):
         return f"{self.start} to {self.end}"
