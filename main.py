@@ -19,7 +19,7 @@ def setup():
     pygame.init()
 
     grid_size = (c.Drawing.SIZE + c.Drawing.MARGIN) * c.Drawing.SQUARES + c.Drawing.MARGIN
-    
+
     # Since the unplaced ships are on the right of the board, we need to add room for two columns of ships
     width = grid_size + c.Drawing.SIZE * 2 + 35
     screen = pygame.display.set_mode([width, grid_size])
@@ -171,7 +171,7 @@ def relativeToShip(point):
             continue
 
         return key
-    
+
     return ""
 
 # TODO: replace with proper logging library
