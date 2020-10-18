@@ -4,12 +4,16 @@ from grid import Grid
 from ship import Ship
 
 class AI:
-    def __init__(self,intel):
+    def __init__(self):
         self.grid = generate()
+        self.intel = False
+
+    def getGrid(self):
+        return self.grid
 
     # The algorithm for each move depends on the intelligence of the AI
     def move(self,your_grid):
-        if intel == False:
+        if self.intel == False:
             pass
 
 # Checks if there are any squares along the supposed path that are already in use
@@ -149,7 +153,4 @@ def generate():
     # Add each ship onto the grid
     for ship in ships:
         grid.addShip(ship)
-    print(grid)
-
-# Tests the current AI() class
-test = AI()
+    return grid
