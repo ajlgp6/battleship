@@ -1,5 +1,6 @@
 import consts as c
 import random as r
+from network import Client
 from grid import Grid
 from ship import Ship
 
@@ -11,8 +12,13 @@ class AI:
     def getGrid(self):
         return self.grid
 
+    def newGrid(self):
+        self.grid = generate()
+        pass
+
     # The algorithm for each move depends on the intelligence of the AI
     def move(self,your_grid):
+
         if self.intel == False:
             pass
 

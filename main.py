@@ -4,8 +4,10 @@ from pygame.locals import *
 
 from network import Client
 from grid import Grid
+from ai import AI
 
 grid = Grid()
+opponent1 = AI()
 opponent = Grid()
 grid_size = 0
 screen = None
@@ -46,7 +48,7 @@ def main_menu():
 		screen.blit(background_image, (0,0))
 		#get mouse position
 		mx, my = pygame.mouse.get_pos()
-		
+
 		#creating button
 		button_1 = pygame.Rect(50, 100, 200, 50)
 		button_2 = pygame.Rect(50, 200, 200, 50)
@@ -97,7 +99,7 @@ def main_menu():
 
 		pygame.display.update()
 		clock.tick(60)
-	
+
 def setup():
     global screen, grid_size
     global client, doGameLoop
@@ -120,6 +122,8 @@ def setup():
 
     pygame.init()
     pygame.display.set_caption('Place your ships')
+
+    opponent1.newGrid()
 
     grid_size = (c.Drawing.SIZE + c.Drawing.MARGIN) * c.Drawing.SQUARES + c.Drawing.MARGIN
 
@@ -212,7 +216,8 @@ def display():
                 if isLeft:
                     state = client.fire(rel_pos)
                     if state != -1:
-                        opponent.update(rel_pos, state)
+                        #opponent.update(rel_pos, state)
+                        opponent1.getGrid().update(rel_pos, state)
                 else:
                     warn(f"Unknown mouse button. State of buttons: {buttons}")
                     continue
@@ -268,10 +273,11 @@ def display():
 
         # If all ships have been placed, draw our ships in the upper left and the opponents grid in the main screen
         if allPlaced:
-            drawGrid(opponent)
+            #drawGrid(opponent)
+            drawGrid(opponent1.getGrid())
             drawGrid(grid, True)
         else:
-            drawGrid(grid)                
+            drawGrid(grid)
 
         # Draw the ships (if any) that still need to be dragged into the grid
         for key in unplaced:
@@ -279,7 +285,7 @@ def display():
 
         # Render ("flip") the display
         clock.tick(1000)
-            
+
         pygame.display.flip()
 
 def relativeToSquare(point):
@@ -304,7 +310,7 @@ def relativeToShip(point):
     return ""
 
 def refreshGrid(checkOpponent = False):
-    global grid, opponent
+    global grid, opponent, opponent1
 
     client.updateGrid()
     updated = client.recv()
@@ -313,7 +319,8 @@ def refreshGrid(checkOpponent = False):
     if checkOpponent:
         client.updateOpponentGrid()
         updated = client.recv()
-        opponent.load(updated)        
+        #opponent.load(updated)
+        opponent1.getGrid().load(updated)
 
 def checkUnplaced():
     global screen, allPlaced
@@ -330,7 +337,7 @@ def drawGrid(grid, offset=False):
     if offset:
         size //= 2.5
         delta = (c.Drawing.SIZE + c.Drawing.MARGIN) * 10 + 30
-    
+
     for row in range(c.Drawing.SQUARES):
         for col in range(c.Drawing.SQUARES):
             mapping = {
