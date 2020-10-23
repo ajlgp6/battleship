@@ -43,6 +43,12 @@ def main_menu():
 	background_image = pygame.transform.scale(background_image, WINDOW_SIZE)
 
 	click = False
+
+	pygame.mixer.init()
+	pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
+	pygame.mixer.music.set_endevent(QUIT)
+	pygame.mixer.music.play()
+
 	while True:
 		#set picture
 		screen.blit(background_image, (0,0))
