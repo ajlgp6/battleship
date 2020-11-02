@@ -1,7 +1,8 @@
-import socket, secrets, sys
+import socket, secrets, sys, threading, time
 import consts as c
 from grid import Grid
 from ship import Ship
+from ai import AI
 
 isDebug = False
 
@@ -82,17 +83,22 @@ class Server:
                     opponent, addr = self.getOpponentGrid(address)
                     
                     current = opponent[points]
-                    newState = c.Grid.MISSED
+                    newState = -1
+
                     if current == c.Grid.EMPTY:
                         newState = c.Grid.MISSED
+
                     elif current == c.Grid.SHIP:
                         newState = c.Grid.SHIP_HIT
-                    else:
-                        print(f"Unknown current grid state {state}")
-                        continue
 
-                    # Update the opponents grid
-                    self.clients[addr].grid.update(points, newState)
+                    else:
+                        print(f"Unknown current grid state {current}")
+
+                    # Update the opponents grid only if the click was valid
+                    if newState != -1:
+                        self.clients[addr].grid.update(points, newState)
+                    else:
+                        newState = self.clients[addr].grid[points]
 
                     # Send back the new state for immediate display
                     self.send(str(newState), address)
@@ -124,6 +130,13 @@ class Server:
 
                 self.send(f"{opponentReady},{ships}", address)
 
+            elif command[0] == "ai":
+                code = self.clients[address].code
+
+                debug(f"providing code \"{code}\"")
+                aiThread = threading.Thread(target = self.runAI, args = [code])
+                aiThread.start()
+
             self.clients[address] = state
 
     def send(self, raw, address):
@@ -143,6 +156,27 @@ class Server:
     def getOpponentGrid(self, address):
         opponentAddr = self.findOpponent(address)
         return self.clients[opponentAddr].grid, opponentAddr
+
+    def runAI(self, code):
+        debug(f"ai joining game with code {code}")
+        aiClient = Client("127.0.0.1")
+
+        try:
+            aiClient.connect(code)
+        except Exception as ex:
+            print(f"AI unable to connect to self hosted server: {ex}")
+
+        ai = AI(False)
+        ships = ai.generate()
+        for ship in ships:
+            debug(f"AI placing ship at {ship}")
+            aiClient.placeShip(ship[0], ship[1])
+
+        # Big brain firing sequence
+        while True:
+            move = ai.move()
+            aiClient.fire(move)
+            time.sleep(1.5)
 
 class Client:
     def __init__(self, server):
@@ -190,7 +224,15 @@ class Client:
 
     def fire(self, pos):
         self.send(f"fire:{pos[0]},{pos[1]}")
-        return int(self.recv())
+
+        newState = c.Grid.EMPTY
+        try:
+            newState = int(self.recv())
+        except ValueError:
+            # Occurs when a packet is incorrectly handled by the wrong recv() function
+            pass
+
+        return newState
 
     def updateGrid(self):
         self.send("grid")

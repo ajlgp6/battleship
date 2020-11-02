@@ -4,10 +4,8 @@ from pygame.locals import *
 
 from network import Client
 from grid import Grid
-from ai import AI
 
 grid = Grid()
-opponent1 = AI()
 opponent = Grid()
 grid_size = 0
 screen = None
@@ -32,7 +30,7 @@ def draw_text(text, color, surface, x, y):
 
 def main_menu():
 	pygame.init()
-	pygame.display.set_caption('BattleShip')
+	pygame.display.set_caption('Battleship')
 	#set display size
 	WINDOW_SIZE = (900, 620)
 	screen = pygame.display.set_mode(WINDOW_SIZE,0,32)
@@ -47,7 +45,7 @@ def main_menu():
 	pygame.mixer.init()
 	pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
 	pygame.mixer.music.set_endevent(QUIT)
-	pygame.mixer.music.play()
+	#pygame.mixer.music.play()
 
 	while True:
 		#set picture
@@ -128,8 +126,6 @@ def setup():
 
     pygame.init()
     pygame.display.set_caption('Place your ships')
-
-    opponent1.newGrid()
 
     grid_size = (c.Drawing.SIZE + c.Drawing.MARGIN) * c.Drawing.SQUARES + c.Drawing.MARGIN
 
@@ -222,8 +218,7 @@ def display():
                 if isLeft:
                     state = client.fire(rel_pos)
                     if state != -1:
-                        #opponent.update(rel_pos, state)
-                        opponent1.getGrid().update(rel_pos, state)
+                        opponent.update(rel_pos, state)
                 else:
                     warn(f"Unknown mouse button. State of buttons: {buttons}")
                     continue
@@ -274,13 +269,15 @@ def display():
 
                 checkUnplaced()
 
+            elif pressed[pygame.K_a]:
+                client.send("ai")
+
         # Blank the screen
         screen.fill(c.Colors.BLACK)
 
         # If all ships have been placed, draw our ships in the upper left and the opponents grid in the main screen
         if allPlaced:
-            #drawGrid(opponent)
-            drawGrid(opponent1.getGrid())
+            drawGrid(opponent)
             drawGrid(grid, True)
         else:
             drawGrid(grid)
@@ -316,7 +313,7 @@ def relativeToShip(point):
     return ""
 
 def refreshGrid(checkOpponent = False):
-    global grid, opponent, opponent1
+    global grid, opponent
 
     client.updateGrid()
     updated = client.recv()
@@ -325,8 +322,7 @@ def refreshGrid(checkOpponent = False):
     if checkOpponent:
         client.updateOpponentGrid()
         updated = client.recv()
-        #opponent.load(updated)
-        opponent1.getGrid().load(updated)
+        opponent.load(updated)
 
 def checkUnplaced():
     global screen, allPlaced
