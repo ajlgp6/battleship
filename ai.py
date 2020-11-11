@@ -21,17 +21,17 @@ class AI:
         return (y, x)
 
     def possibleHits(self,hit):
-        north = self.currentHit-c.Drawing.SQUARES
-        east = self.currentHit+1
-        south = self.currentHit+c.Drawing.SQUARES
-        west = self.currentHit-1
-        dir = [north,east,south,west]
+        north = int(self.currentHit-c.Drawing.SQUARES)
+        east = int(self.currentHit+1)
+        south = int(self.currentHit+c.Drawing.SQUARES)
+        west = int(self.currentHit-1)
+        dir = [west,south,east,north]
 
         # If the next spot is available
         for spot in dir:
-            if test in self.guesses:
+            if spot in self.guesses:
                 # Fire at that spot
-                self.stack.append(self.indices(test))
+                self.stack.append(spot)
         return
 
     # The algorithm for each move depends on the intelligence of the AI
@@ -52,13 +52,13 @@ class AI:
                     self.possibleHits(self.currentHit)
 
                 if len(self.stack) > 0:
-                    return self.indices(stack.pop())
+                    return self.indices(self.stack.pop())
 
                 # If there is nothing to go off of
                 else:
                     # Make a random guess from the available spaces
                     guess = self.guesses[0]
-                    return self.indices(guess)
+                    return self.indices(int(guess))
 
             # Otherwise, no more spaces are available
             else:
