@@ -25,7 +25,7 @@ class Server:
             raw, address = self.s.recvfrom(4096)
             data = raw.decode('utf-8')
             debug(f"{address}:{data}")
-            
+
             if data.find(":") == -1:
                 debug(f"(malformed)")
                 continue
@@ -51,7 +51,7 @@ class Server:
             # Return the client side grid state. "grid:"
             if command[0] == "grid":
                 self.send(str(grid), address)
-            
+
             # Return the redacted state of the opponent's grid. "grid-opponent:"
             elif command[0] == "grid-opponent":
                 try:
@@ -67,7 +67,7 @@ class Server:
                 for i in command[1].split(','):
                     points.append(int(i))
 
-                try:                
+                try:
                     state.addShip(points)
                     self.send("ok", address)
                 except IndexError:
@@ -81,7 +81,7 @@ class Server:
 
                 try:
                     opponent, addr = self.getOpponentGrid(address)
-                    
+
                     current = opponent[points]
                     newState = -1
 
@@ -150,7 +150,7 @@ class Server:
             current = self.clients[addr]
             if current.code == code and addr != address:
                 return addr
-        
+
         raise ValueError(f"Unable to find opponent for {address}")
 
     def getOpponentGrid(self, address):
@@ -173,10 +173,17 @@ class Server:
             aiClient.placeShip(ship[0], ship[1])
 
         # Big brain firing sequence
-        while True:
-            move = ai.move()
-            aiClient.fire(move)
-            time.sleep(1.5)
+        hit = 0
+        finished = False
+
+        # While there are still available spaces on the grid
+        while not finished:
+            move = ai.move(hit)
+            if move == (-1,-1):
+                finished = True
+            else:
+                aiClient.fire(move)
+                time.sleep(1.5)
 
 class Client:
     def __init__(self, server):
@@ -250,7 +257,7 @@ class GameState:
 
     def __repr__(self):
         return f"{self.code}: {self.grid.ships}"
-    
+
     def addShip(self, points):
         first = (points[0], points[1])
         second = (points[2], points[3])

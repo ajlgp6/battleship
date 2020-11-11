@@ -1,20 +1,68 @@
 import consts as c
 import random as r
+from grid import Grid
 
 class AI:
     def __init__(self, intel):
         self.intel = intel
 
+        # Holds the number of available
+        self.guesses = list(range(c.Drawing.SQUARES*c.Drawing.SQUARES))
+        r.shuffle(self.guesses)
+        self.hit = False
+        self.currentHit = -1
+        self.stack = []
+
+    def indices(self,spot):
+        y = int(spot/c.Drawing.SQUARES)
+        x = int(spot%c.Drawing.SQUARES)
+        self.currentHit = spot
+        self.guesses.remove(spot)
+        return (y, x)
+
+    def possibleHits(self,hit):
+        north = self.currentHit-c.Drawing.SQUARES
+        east = self.currentHit+1
+        south = self.currentHit+c.Drawing.SQUARES
+        west = self.currentHit-1
+        dir = [north,east,south,west]
+
+        # If the next spot is available
+        for spot in dir:
+            if test in self.guesses:
+                # Fire at that spot
+                self.stack.append(self.indices(test))
+        return
+
     # The algorithm for each move depends on the intelligence of the AI
-    def move(self):
+    def move(self,resp):
+        self.hit = bool(resp)
+
+        # The Smart AI algorithm
         if self.intel == True:
             print("Not implemented")
-            return (0, 0)
+            return (-1, -1)
 
-        x = r.randint(0, c.Drawing.SQUARES - 1)
-        y = r.randint(0, c.Drawing.SQUARES - 1)
+        # The Dumb AI algorithm
+        else:
+            # As long as there are remaining guesses
+            if len(self.guesses) >= 1:
+                # If a hit was made
+                if self.hit:
+                    self.possibleHits(self.currentHit)
 
-        return (x, y)
+                if len(self.stack) > 0:
+                    return self.indices(stack.pop())
+
+                # If there is nothing to go off of
+                else:
+                    # Make a random guess from the available spaces
+                    guess = self.guesses[0]
+                    return self.indices(guess)
+
+            # Otherwise, no more spaces are available
+            else:
+                return (-1,-1)
 
     # Checks if there are any squares along the supposed path that are already in use
     # Returns a tuple of integers (or a tuple of -1 stating that the path doesn't work)
