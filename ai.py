@@ -4,15 +4,29 @@ from grid import Grid
 
 class AI:
     def __init__(self, intel):
+        # Records the initelligence of this particular AI
         self.intel = intel
 
-        # Holds the number of available
+        # Holds the number of available spaces to shoot at
         self.guesses = list(range(c.Drawing.SQUARES*c.Drawing.SQUARES))
         r.shuffle(self.guesses)
-        self.hit = False
-        self.currentHit = -1
+
+        # Holds the rows that have yet to be "officially" checked (only used
+        # with smart AIs)
+        self.rows = list(range(c.Drawing.SQUARES))
+        r.shuffle(self.rows)
+
+        # Holds the spaces that should be fired at next
         self.stack = []
 
+        # Records whether the last move hit a ship
+        self.hit = False
+
+        # Records the space of the last move
+        self.currentHit = -1
+
+    # Returns the coord (y, x) values of the selected grid space. This spacce
+    # will the be removed from the guesses list.
     def indices(self,spot):
         y = int(spot/c.Drawing.SQUARES)
         x = int(spot%c.Drawing.SQUARES)
@@ -20,7 +34,10 @@ class AI:
         self.guesses.remove(spot)
         return (y, x)
 
+    # Records the spaces surrounding the hit ship. If the spaces have not been
+    # hit yet, they will be pushed onto the stack to be fired at later.
     def possibleHits(self,hit):
+        # Calculate the space values that are touching the hit ship space
         north = int(self.currentHit-c.Drawing.SQUARES)
         east = int(self.currentHit+1)
         south = int(self.currentHit+c.Drawing.SQUARES)
@@ -38,31 +55,54 @@ class AI:
     def move(self,resp):
         self.hit = bool(resp)
 
-        # The Smart AI algorithm
-        if self.intel == True:
-            print("Not implemented")
-            return (-1, -1)
+        # As long as there are remaining guesses
+        if len(self.guesses) >= 1:
+            # If a hit was made
+            if self.hit:
+                self.possibleHits(self.currentHit)
 
-        # The Dumb AI algorithm
-        else:
-            # As long as there are remaining guesses
-            if len(self.guesses) >= 1:
-                # If a hit was made
-                if self.hit:
-                    self.possibleHits(self.currentHit)
+            # If the stack includes spaces, shoot the spaces
+            if len(self.stack) > 0:
+                return self.indices(self.stack.pop())
 
-                if len(self.stack) > 0:
-                    return self.indices(self.stack.pop())
+            # If there is nothing to go off of, continue with the basic
+            # algorithm tied to your AI
 
-                # If there is nothing to go off of
+            # The Smart AI algorithm
+            elif self.intel:
+                # Ensure that there are untouched rows
+                if len(self.rows) > 0:
+                    # Grab some random row
+                    row = self.rows[0]
+                    self.rows.remove(row)
+
+                    # Calculate the spots of this row's checkerboard pattern
+                    for i in range(int(c.Drawing.SQUARES/2)):
+                        space = (10 * row) + (2 * i) + (row % 2)
+
+                        # If this space has not been hit add it onto the stack
+                        if space in self.guesses:
+                            self.stack.insert(0,space)
+
+                    # Make a recursive call to fire at the board
+                    return self.move(self.hit)
+
+                # Otherwise, all the checkerboard spots have been hit (in this
+                # case, the AI should've won due to the strategy) so just fire
+                # randomly until all spaces have been hit
                 else:
-                    # Make a random guess from the available spaces
                     guess = self.guesses[0]
                     return self.indices(int(guess))
 
-            # Otherwise, no more spaces are available
+            # The Dumb AI algorithm
             else:
-                return (-1,-1)
+                # Make a random guess from the available spaces
+                guess = self.guesses[0]
+                return self.indices(int(guess))
+
+        # Otherwise, no more spaces are available
+        else:
+            return (-1,-1)
 
     # Checks if there are any squares along the supposed path that are already in use
     # Returns a tuple of integers (or a tuple of -1 stating that the path doesn't work)
@@ -194,5 +234,4 @@ class AI:
                     pt = self.tryOrientation(index, ship, indices, not vertical)
                     ships.append(((y, x), pt))
                     break
-
         return ships
