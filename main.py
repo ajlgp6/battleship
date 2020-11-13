@@ -259,7 +259,7 @@ def setup():
         exit(f"Unable to connect to server: {ex}")
 
     pygame.init()
-    pygame.display.set_caption('Place your ships')
+    pygame.display.set_caption(f"Place your ships (game {joined})")
 
 #in game options will have a choice to change the grid size
     grid_size = (c.Drawing.SIZE + c.Drawing.MARGIN) * c.Drawing.SQUARES + c.Drawing.MARGIN
@@ -287,24 +287,24 @@ def setup():
 
     # Check for updates from the server
     while doGameLoop:
-		#if(bothAI):
-			#client.send("ai")
-		#else:
-        client.send("stats")
-        stats = client.recv().split(",")
-        if len(stats) < 1:
-            continue
+        client.updateStats(opponentDecreased, weDecreased)
 
-        client.debug(stats)
+        if client.ready:
+            refreshGrid(True)
 
-        try:
-            # Opponent ready
-            if stats[0] == "ready":
-                refreshGrid(True)
-        except:
-            pass
+        time.sleep(0.5)
 
-        time.sleep(1)
+def opponentDecreased():
+    print("Opponent ship sunk!")
+
+    if client.opponentShipsPrev == 0:
+        print("You win!")
+
+def weDecreased():
+    print("Shp sunk :(")
+
+    if client.ourShipsPrev == 0:
+        print("You lose.")
 
 def display():
     global screen, doGameLoop

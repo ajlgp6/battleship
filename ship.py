@@ -28,13 +28,20 @@ class Ship:
         self.start = start
         self.end = end
 
-        if not self.isVertical:
-            for i in range(end[1] - start[1] + 1):
-                self.parts.append((start[0], start[1] + i))
-        else:
-            for i in range(end[0] - start[0] + 1):
-                self.parts.append((start[0] + i, start[1]))
+        if self.isVertical:
+            diff = end[0] - start[0]
+            for i in range(diff + 1):
+                p = (start[0] + i, start[1])
+                # print(f"adding {p} to vertical ship from {self.start} to {self.end}")
+                self.parts.append(p)
         
+        else:
+            diff = end[1] - start[1]
+            for i in range(diff + 1):
+                p = (start[0], start[1] + i)
+                # print(f"adding {p} to NOT vertical ship from {self.start} to {self.end}")
+                self.parts.append(p)
+
         self.size = len(self.parts)
 
     def getParts(self):
@@ -47,10 +54,15 @@ class Ship:
         return self.id
 
     def hasSquare(self, point):
-        return point in self.parts
+        for part in self.parts:
+            if part[0] == point[0] and part[1] == point[1]:
+                return True
+        
+        return False
 
     def isAlive(self):
         return self.damaged < self.size
 
     def __str__(self):
-        return f"{self.start} to {self.end}"
+        health = self.size - self.damaged
+        return f"{self.id} from {self.start} to {self.end}, health: {health}/{self.size}, alive: {self.isAlive()}"

@@ -39,8 +39,8 @@ class Grid:
         if newState == c.Grid.SHIP_HIT:
            for ship in self.ships:
                if ship.hasSquare(index):
-                    print(f"Hit on ship {ship.getID()} of length {ship.getSize()} at {index}")
                     ship.damaged += 1
+                    # print(f"Hit on ship {ship}")
 
     # Serialization
     def load(self, state):
