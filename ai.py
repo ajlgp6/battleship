@@ -47,6 +47,11 @@ class AI:
         # If the next spot is available
         for spot in dir:
             if spot in self.guesses:
+                # In case the spot has already been added onto the stack, remove
+                # it so that it may be moved further up
+                if spot in self.stack:
+                    self.stack.remove(spot)
+
                 # Fire at that spot
                 self.stack.append(spot)
         return

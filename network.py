@@ -182,7 +182,11 @@ class Server:
             if move == (-1,-1):
                 finished = True
             else:
-                aiClient.fire(move)
+                var = aiClient.fire(move)
+                if var == 3:
+                    hit = 1
+                else:
+                    hit = 0
                 time.sleep(1.5)
 
 class Client:
