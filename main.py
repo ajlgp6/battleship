@@ -1,5 +1,6 @@
 import pygame, sys, time, threading
 import consts as c
+from menu import soundSettings
 from pygame.locals import *
 
 from network import Client
@@ -11,6 +12,12 @@ grid_size = 0
 screen = None
 clock = pygame.time.Clock()
 
+#music setup
+pygame.mixer.init()
+pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
+pygame.mixer.music.set_endevent(QUIT)
+pygame.mixer.music.play()
+
 # Data for ships that aren't placed
 unplaced = dict()
 allPlaced = False
@@ -19,6 +26,14 @@ allPlaced = False
 client = None
 opponentId = ""
 doGameLoop = True
+
+#set display size
+WINDOW_SIZE = (900, 620)
+screen = pygame.display.set_mode(WINDOW_SIZE,0,32)
+#get image
+background_image = pygame.image.load("assets/battleship.jpg")
+#scale image
+background_image = pygame.transform.scale(background_image, WINDOW_SIZE)
 
 def draw_text(text, color, surface, x, y):
 	#set font
@@ -31,23 +46,11 @@ def draw_text(text, color, surface, x, y):
 def main_menu():
 	pygame.init()
 	pygame.display.set_caption('Battleship')
-	#set display size
-	WINDOW_SIZE = (900, 620)
-	screen = pygame.display.set_mode(WINDOW_SIZE,0,32)
-
-	#get image
-	background_image = pygame.image.load('battleship.jpg')
-	#scale image
-	background_image = pygame.transform.scale(background_image, WINDOW_SIZE)
 
 	click = False
-
-	pygame.mixer.init()
-	pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
-	pygame.mixer.music.set_endevent(QUIT)
-	#pygame.mixer.music.play()
-
+	
 	while True:
+		pygame.display.set_mode(WINDOW_SIZE,0,32)
 		#set picture
 		screen.blit(background_image, (0,0))
 		#get mouse position
@@ -60,13 +63,18 @@ def main_menu():
 		button_4 = pygame.Rect(50, 400, 200, 50)
 		if button_1.collidepoint((mx, my)):
 			if click:
-				setup()
+				#setup()
+				#pygame.mixer.music.set_volume(0.5)
+				AIselection()
 		if button_2.collidepoint((mx, my)):
 			if click:
 				draw_text('Game Settings', (0,0,0), screen, 220, 220)
+				#gameSettings()
 		if button_3.collidepoint((mx, my)):
 			if click:
-				draw_text('Options', (0,0,0), screen, 220, 220)
+				draw_text('Sound Settings', (0,0,0), screen, 220, 220)
+				#soundSettings()
+				soundSettings()
 		if button_4.collidepoint((mx, my)):
 			if click:
 				pygame.quit()
@@ -85,7 +93,7 @@ def main_menu():
 		#on top because after the display of button
 		draw_text('Play', (0,0,0), screen, 150, 125)
 		draw_text('Game Settings', (0,0,0), screen, 150, 225)
-		draw_text('Options', (0,0,0), screen, 150, 325)
+		draw_text('Sound Settings', (0,0,0), screen, 150, 325)
 		draw_text('Quit', (0,0,0), screen, 150, 425)
 
 		click = False
@@ -103,6 +111,71 @@ def main_menu():
 
 		pygame.display.update()
 		clock.tick(60)
+
+def AIselection():
+	running = True
+	click = False
+	while running:
+		pygame.display.set_mode(WINDOW_SIZE,0,32)
+		screen.blit(background_image, (0,0))
+		#get mouse position
+		mx, my = pygame.mouse.get_pos()
+		
+		#creating button
+		button_1 = pygame.Rect(50, 100, 200, 50)
+		button_2 = pygame.Rect(50, 200, 200, 50)
+		button_3 = pygame.Rect(50, 300, 200, 50)
+		button_4 = pygame.Rect(50, 400, 200, 50)
+		
+		#if button_1.collidepoint((mx, my)):
+			#if click:
+				#setup()
+		#if button_2.collidepoint((mx, my)):
+			#if click:
+				#draw_text('Game Settings', (0,0,0), screen, 220, 220)
+		if button_3.collidepoint((mx, my)):
+			if click:
+				setup()
+		if button_4.collidepoint((mx, my)):
+			if click:
+				running = False
+		
+		#display of button
+		pygame.draw.rect(screen, (0, 0, 0), (48, 98, 204, 54))
+		pygame.draw.rect(screen, (25, 70, 227), button_1)
+		pygame.draw.rect(screen, (0, 0, 0), (48, 198, 204, 54))
+		pygame.draw.rect(screen, (25, 70, 227), button_2)
+		pygame.draw.rect(screen, (0, 0, 0), (48, 298, 204, 54))
+		pygame.draw.rect(screen, (25, 70, 227), button_3)
+		pygame.draw.rect(screen, (0, 0, 0), (48, 398, 204, 54))
+		pygame.draw.rect(screen, (25, 70, 227), button_4)
+
+		#on top because after the display of button
+		draw_text('AI vs AI', (0,0,0), screen, 150, 125)
+		draw_text('Player vs AI', (0,0,0), screen, 150, 225)
+		draw_text('Player vs Player', (0,0,0), screen, 150, 325)
+		draw_text('Back', (0,0,0), screen, 150, 425)
+
+		click = False
+		for event in pygame.event.get():
+			if event.type == QUIT:
+				pygame.quit()
+				sys.exit()
+			if event.type == KEYDOWN:
+				if event.key == K_ESCAPE:
+					pygame.quit()
+					sys.exit()
+			if event.type == MOUSEBUTTONDOWN:
+				if event.button == 1:
+					click = True
+
+		pygame.display.update()
+		clock.tick(60)
+		
+#def gameSettings():
+	#gid size
+	#ship count
+	
 
 def setup():
     global screen, grid_size
@@ -127,6 +200,7 @@ def setup():
     pygame.init()
     pygame.display.set_caption('Place your ships')
 
+#in game options will have a choice to change the grid size
     grid_size = (c.Drawing.SIZE + c.Drawing.MARGIN) * c.Drawing.SQUARES + c.Drawing.MARGIN
 
     # Since the unplaced ships are on the right of the board, we need to add room for two columns of ships
