@@ -305,11 +305,11 @@ class Client:
 
             if self.opponentShips < self.opponentShipsPrev:
                 self.opponentShipsPrev = self.opponentShips
-                opponent()
+                opponent(self.opponentShips)
             
             if self.ourShips < self.ourShipsPrev:
                 self.ourShipsPrev = self.ourShips
-                our()
+                our(self.ourShips)
 
         except:
             pass

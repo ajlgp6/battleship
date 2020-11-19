@@ -299,17 +299,28 @@ def setup():
 
         time.sleep(0.5)
 
-def opponentDecreased():
+def opponentDecreased(remaining):
     print("Opponent ship sunk!")
 
     if client.opponentShipsPrev == 0:
         print("You win!")
 
-def weDecreased():
+    displayRemaining(remaining)
+
+def weDecreased(remaining):
     print("Shp sunk :(")
 
     if client.ourShipsPrev == 0:
         print("You lose.")
+
+    displayRemaining(remaining)
+
+def displayRemaining(remaining):
+    global doGameLoop
+
+    print(f"{remaining} / 5 ships remain")
+    if remaining == 0:
+        doGameLoop = False
 
 def display():
     global screen, doGameLoop
