@@ -11,6 +11,8 @@ opponent = Grid()
 grid_size = 0
 screen = None
 clock = pygame.time.Clock()
+chooseAI = False
+bothAI = False
 
 #music setup
 pygame.mixer.init()
@@ -113,6 +115,7 @@ def main_menu():
 		clock.tick(60)
 
 def AIselection():
+	global chooseAI
 	running = True
 	click = False
 	while running:
@@ -129,10 +132,12 @@ def AIselection():
 		
 		#if button_1.collidepoint((mx, my)):
 			#if click:
+				#bothAI = True
 				#setup()
-		#if button_2.collidepoint((mx, my)):
-			#if click:
-				#draw_text('Game Settings', (0,0,0), screen, 220, 220)
+		if button_2.collidepoint((mx, my)):
+			if click:
+				chooseAI = True
+				setup()
 		if button_3.collidepoint((mx, my)):
 			if click:
 				setup()
@@ -243,7 +248,7 @@ def setup():
         time.sleep(1)
 
 def display():
-    global screen, doGameLoop
+    global screen, doGameLoop, chooseAI
 
     dragging = ""       # the ship name that is currently being dragged
     dragRotate = False  # if the current ship has been rotated
@@ -343,14 +348,20 @@ def display():
 
                 checkUnplaced()
 
-            elif pressed[pygame.K_a]:
-                client.send("ai")
+            #elif pressed[pygame.K_a]:
+                #client.send("ai")
+        #if (chooseAI):
+        	#client.send("ai")
+        	#chooseAI = False
 
         # Blank the screen
         screen.fill(c.Colors.BLACK)
 
         # If all ships have been placed, draw our ships in the upper left and the opponents grid in the main screen
         if allPlaced:
+            if(chooseAI):
+            	client.send("ai")
+            	chooseAI = False
             drawGrid(opponent)
             drawGrid(grid, True)
         else:
