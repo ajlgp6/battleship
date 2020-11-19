@@ -13,6 +13,8 @@ def debug(msg):
     print(f"[DBG] {msg}")
 
 class Server:
+    smart_AI = False
+
     def __init__(self):
         self.clients = dict()
 
@@ -130,7 +132,16 @@ class Server:
 
                 self.send(f"{opponentReady},{ships}", address)
 
-            elif command[0] == "ai":
+            elif command[0] == "smart_ai":
+                Server.smart_AI = True
+                code = self.clients[address].code
+
+                debug(f"providing code \"{code}\"")
+                aiThread = threading.Thread(target = self.runAI, args = [code])
+                aiThread.start()
+
+            elif command[0] == "dumb_ai":
+                Server.smart_AI = False
                 code = self.clients[address].code
 
                 debug(f"providing code \"{code}\"")
@@ -166,7 +177,11 @@ class Server:
         except Exception as ex:
             print(f"AI unable to connect to self hosted server: {ex}")
 
-        ai = AI(False)
+        if(Server.smart_AI):
+            ai = AI(True)
+        else:
+            ai = AI(False)
+
         ships = ai.generate()
         for ship in ships:
             debug(f"AI placing ship at {ship}")

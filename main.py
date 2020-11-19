@@ -13,6 +13,7 @@ screen = None
 clock = pygame.time.Clock()
 chooseAI = False
 bothAI = False
+smart_AI = False
 
 #music setup
 pygame.mixer.init()
@@ -60,22 +61,21 @@ def main_menu():
 
 		#creating button
 		button_1 = pygame.Rect(50, 100, 200, 50)
-		button_2 = pygame.Rect(50, 200, 200, 50)
-		button_3 = pygame.Rect(50, 300, 200, 50)
-		button_4 = pygame.Rect(50, 400, 200, 50)
+		#button_2 = pygame.Rect(50, 200, 200, 50)
+		button_3 = pygame.Rect(50, 200, 200, 50)
+		button_4 = pygame.Rect(50, 300, 200, 50)
 		if button_1.collidepoint((mx, my)):
 			if click:
 				#setup()
 				#pygame.mixer.music.set_volume(0.5)
 				AIselection()
-		if button_2.collidepoint((mx, my)):
-			if click:
-				draw_text('Game Settings', (0,0,0), screen, 220, 220)
+		#if button_2.collidepoint((mx, my)):
+			#if click:
+				#draw_text('Game Settings', (0,0,0), screen, 220, 220)
 				#gameSettings()
 		if button_3.collidepoint((mx, my)):
 			if click:
 				draw_text('Sound Settings', (0,0,0), screen, 220, 220)
-				#soundSettings()
 				soundSettings()
 		if button_4.collidepoint((mx, my)):
 			if click:
@@ -85,18 +85,18 @@ def main_menu():
 		#display of button
 		pygame.draw.rect(screen, (0, 0, 0), (48, 98, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_1)
+		#pygame.draw.rect(screen, (0, 0, 0), (48, 198, 204, 54))
+		#pygame.draw.rect(screen, (25, 70, 227), button_2)
 		pygame.draw.rect(screen, (0, 0, 0), (48, 198, 204, 54))
-		pygame.draw.rect(screen, (25, 70, 227), button_2)
-		pygame.draw.rect(screen, (0, 0, 0), (48, 298, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_3)
-		pygame.draw.rect(screen, (0, 0, 0), (48, 398, 204, 54))
+		pygame.draw.rect(screen, (0, 0, 0), (48, 298, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_4)
 
 		#on top because after the display of button
 		draw_text('Play', (0,0,0), screen, 150, 125)
-		draw_text('Game Settings', (0,0,0), screen, 150, 225)
-		draw_text('Sound Settings', (0,0,0), screen, 150, 325)
-		draw_text('Quit', (0,0,0), screen, 150, 425)
+		#draw_text('Game Settings', (0,0,0), screen, 150, 225)
+		draw_text('Sound Settings', (0,0,0), screen, 150, 225)
+		draw_text('Quit', (0,0,0), screen, 150, 325)
 
 		click = False
 		for event in pygame.event.get():
@@ -115,7 +115,7 @@ def main_menu():
 		clock.tick(60)
 
 def AIselection():
-	global chooseAI
+	global chooseAI, bothAI
 	running = True
 	click = False
 	while running:
@@ -134,10 +134,12 @@ def AIselection():
 			#if click:
 				#bothAI = True
 				#setup()
+				#AIdifficult()
 		if button_2.collidepoint((mx, my)):
 			if click:
 				chooseAI = True
-				setup()
+				#setup()
+				AIdifficult()
 		if button_3.collidepoint((mx, my)):
 			if click:
 				setup()
@@ -177,14 +179,68 @@ def AIselection():
 		pygame.display.update()
 		clock.tick(60)
 		
-#def gameSettings():
-	#gid size
-	#ship count
+def AIdifficult():
+	global smart_AI
+
+	running = True
+	click = False
+	while running:
+		pygame.display.set_mode(WINDOW_SIZE,0,32)
+		screen.blit(background_image, (0,0))
+		#get mouse position
+		mx, my = pygame.mouse.get_pos()
+		
+		#creating button
+		button_1 = pygame.Rect(50, 100, 200, 50)
+		button_2 = pygame.Rect(50, 200, 200, 50)
+		button_3 = pygame.Rect(50, 300, 200, 50)
+		
+		if button_1.collidepoint((mx, my)):
+			if click:
+				smart_AI = False
+				setup()
+		if button_2.collidepoint((mx, my)):
+			if click:
+				smart_AI = True
+				setup()
+		if button_3.collidepoint((mx, my)):
+			if click:
+				running = False
+		
+		#display of button
+		pygame.draw.rect(screen, (0, 0, 0), (48, 98, 204, 54))
+		pygame.draw.rect(screen, (25, 70, 227), button_1)
+		pygame.draw.rect(screen, (0, 0, 0), (48, 198, 204, 54))
+		pygame.draw.rect(screen, (25, 70, 227), button_2)
+		pygame.draw.rect(screen, (0, 0, 0), (48, 298, 204, 54))
+		pygame.draw.rect(screen, (25, 70, 227), button_3)
+
+		#on top because after the display of button
+		draw_text('Easy AI', (0,0,0), screen, 150, 125)
+		draw_text('Hard AI', (0,0,0), screen, 150, 225)
+		draw_text('Back', (0,0,0), screen, 150, 325)
+
+		click = False
+		for event in pygame.event.get():
+			if event.type == QUIT:
+				pygame.quit()
+				sys.exit()
+			if event.type == KEYDOWN:
+				if event.key == K_ESCAPE:
+					pygame.quit()
+					sys.exit()
+			if event.type == MOUSEBUTTONDOWN:
+				if event.button == 1:
+					click = True
+
+		pygame.display.update()
+		clock.tick(60)
 	
 
 def setup():
     global screen, grid_size
     global client, doGameLoop
+    global bothAI
 
     code = input("Enter game code (or blank to create a new game): ")
 
@@ -231,6 +287,9 @@ def setup():
 
     # Check for updates from the server
     while doGameLoop:
+		#if(bothAI):
+			#client.send("ai")
+		#else:
         client.send("stats")
         stats = client.recv().split(",")
         if len(stats) < 1:
@@ -248,7 +307,8 @@ def setup():
         time.sleep(1)
 
 def display():
-    global screen, doGameLoop, chooseAI
+    global screen, doGameLoop
+    global chooseAI, smart_AI
 
     dragging = ""       # the ship name that is currently being dragged
     dragRotate = False  # if the current ship has been rotated
@@ -360,8 +420,11 @@ def display():
         # If all ships have been placed, draw our ships in the upper left and the opponents grid in the main screen
         if allPlaced:
             if(chooseAI):
-            	client.send("ai")
-            	chooseAI = False
+                if(smart_AI):
+                    client.send("smart_ai")
+                else:
+                    client.send("dumb_ai")
+                chooseAI = False
             drawGrid(opponent)
             drawGrid(grid, True)
         else:
