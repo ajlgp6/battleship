@@ -286,11 +286,16 @@ def setup():
     displayThread.start()
 
     # Check for updates from the server
+    count = 2
     while doGameLoop:
         client.updateStats(opponentDecreased, weDecreased)
 
         if client.ready:
-            refreshGrid(True)
+            # Count is here to avoid requesting updates before the AI is ready
+            if count < 0:
+                refreshGrid(True)
+            else:
+                count -= 1
 
         time.sleep(0.5)
 
