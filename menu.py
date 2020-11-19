@@ -30,9 +30,15 @@ doGameLoop = True
 WINDOW_SIZE = (900, 620)
 screen = pygame.display.set_mode(WINDOW_SIZE,0,32)
 #get image
-background_image = pygame.image.load("assets/battleship.jpg")
+background_image = pygame.image.load("assets/background1.jpg")
 #scale image
 background_image = pygame.transform.scale(background_image, WINDOW_SIZE)
+
+grape = pygame.image.load("assets/sprites/grape.png")
+apple = pygame.image.load("assets/sprites/apple.png")
+orange = pygame.image.load("assets/sprites/orange.png")
+strawberry = pygame.image.load("assets/sprites/strawberry.png")
+watermelon = pygame.image.load("assets/sprites/watermelon.png")
 
 def draw_text(text, color, surface, x, y):
 	#set font
@@ -51,16 +57,22 @@ def soundSettings():
 	while running:
 		pygame.display.set_mode(WINDOW_SIZE,0,32)
 		screen.blit(background_image, (0,0))
+		screen.blit(background_image, (0,0))
+		screen.blit(grape, (310,150))
+		screen.blit(apple, (460,20))
+		screen.blit(orange, (615,90))
+		screen.blit(strawberry, (760,0))
+		screen.blit(watermelon, (750,210))
 		#get mouse position
 		mx, my = pygame.mouse.get_pos()
 		
 		#creating button
-		button_1 = pygame.Rect(50, 100, 200, 50)
-		button_2 = pygame.Rect(50, 200, 200, 50)
-		button_3 = pygame.Rect(50, 300, 200, 50)
-		button_4 = pygame.Rect(50, 400, 200, 50)
-		button_5 = pygame.Rect(302, 100, 200, 50)
-		button_6 = pygame.Rect(302, 200, 200, 50)
+		button_1 = pygame.Rect(50, 80, 200, 50)
+		button_2 = pygame.Rect(50, 150, 200, 50)
+		button_3 = pygame.Rect(50, 220, 200, 50)
+		button_4 = pygame.Rect(50, 290, 200, 50)
+		button_5 = pygame.Rect(50, 360, 200, 50)
+		button_6 = pygame.Rect(50, 430, 200, 50)
 		
 		if button_1.collidepoint((mx, my)):
 			if click:
@@ -103,26 +115,26 @@ def soundSettings():
 			update = False
 		
 		#display of button
-		pygame.draw.rect(screen, (0, 0, 0), (48, 98, 204, 54))
+		pygame.draw.rect(screen, (0, 0, 0), (48, 78, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_1)
-		pygame.draw.rect(screen, (0, 0, 0), (48, 198, 204, 54))
+		pygame.draw.rect(screen, (0, 0, 0), (48, 148, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_2)
-		pygame.draw.rect(screen, (0, 0, 0), (48, 298, 204, 54))
+		pygame.draw.rect(screen, (0, 0, 0), (48, 218, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_3)
-		pygame.draw.rect(screen, (0, 0, 0), (48, 398, 204, 54))
+		pygame.draw.rect(screen, (0, 0, 0), (48, 288, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_4)
-		pygame.draw.rect(screen, (0, 0, 0), (300, 98, 204, 54))
+		pygame.draw.rect(screen, (0, 0, 0), (48, 358, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_5)
-		pygame.draw.rect(screen, (0, 0, 0), (300, 198, 204, 54))
+		pygame.draw.rect(screen, (0, 0, 0), (48, 428, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_6)
 
 		#on top because after the display of button
-		draw_text('100%', (0,0,0), screen, 150, 125)
-		draw_text('75%', (0,0,0), screen, 150, 225)
-		draw_text('50%', (0,0,0), screen, 150, 325)
-		draw_text('25%', (0,0,0), screen, 150, 425)
-		draw_text('Mute', (0,0,0), screen, 402, 125)
-		draw_text('Back', (0,0,0), screen, 402, 225)
+		draw_text('100%', (0,0,0), screen, 150, 105)
+		draw_text('75%', (0,0,0), screen, 150, 175)
+		draw_text('50%', (0,0,0), screen, 150, 245)
+		draw_text('25%', (0,0,0), screen, 150, 315)
+		draw_text('Mute', (0,0,0), screen, 150, 385)
+		draw_text('Back', (0,0,0), screen, 150, 455)
 
 		click = False
 		for event in pygame.event.get():
