@@ -1,6 +1,7 @@
 import pygame, sys, time, threading
 import consts as c
 from menu import soundSettings
+import sound
 from pygame.locals import *
 
 from network import Client
@@ -17,9 +18,6 @@ smart_AI = False
 
 #music setup
 pygame.mixer.init()
-pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
-pygame.mixer.music.set_endevent(QUIT)
-pygame.mixer.music.play()
 
 # Data for ships that aren't placed
 unplaced = dict()
@@ -72,7 +70,7 @@ def main_menu():
     pygame.display.set_caption('Battlefruit')
 
     #background music to play over menu
-    pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
+    pygame.mixer.music.load("assets/sound/mainmenu_bg.wav")
     pygame.mixer.music.set_endevent(QUIT)
     pygame.mixer.music.play(-1)
 
@@ -93,18 +91,14 @@ def main_menu():
 
         #creating button
         button_1 = pygame.Rect(50, 100, 200, 50)
-        #button_2 = pygame.Rect(50, 200, 200, 50)
         button_3 = pygame.Rect(50, 200, 200, 50)
         button_4 = pygame.Rect(50, 300, 200, 50)
         if button_1.collidepoint((mx, my)):
             if click:
-                #setup()
-                #pygame.mixer.music.set_volume(0.5)
                 AIselection()
         if button_3.collidepoint((mx, my)):
             if click:
                 draw_text('Sound Settings', (0,0,0), screen, 220, 220)
-                #soundSettings()
                 soundSettings()
         if button_4.collidepoint((mx, my)):
             if click:
@@ -161,14 +155,10 @@ def AIselection():
         button_3 = pygame.Rect(50, 300, 200, 50)
         button_4 = pygame.Rect(50, 400, 200, 50)
         
-        #if button_1.collidepoint((mx, my)):
-            #if click:
-                #setup()
         if button_2.collidepoint((mx, my)):
             if click:
                 chooseAI = True
                 AIdifficult()
-                #draw_text('Game Settings', (0,0,0), screen, 220, 220)
         if button_3.collidepoint((mx, my)):
             if click:
                 setup()
@@ -265,6 +255,7 @@ def AIdifficult():
         pygame.display.update()
         clock.tick(60)
 
+
 def setup():
     global screen, grid_size
     global client, doGameLoop
@@ -332,6 +323,7 @@ def opponentDecreased(remaining):
 
     if client.opponentShipsPrev == 0:
         print("You win!")
+        sound.play_sound("victory")
 
     displayRemaining(remaining)
 
@@ -340,6 +332,7 @@ def weDecreased(remaining):
 
     if client.ourShipsPrev == 0:
         print("You lose.")
+        sound.play_sound("loss")
 
     displayRemaining(remaining)
 
@@ -403,14 +396,15 @@ def display():
 
                 if isLeft:
                     state = client.fire(rel_pos)
+                    
                     if state != -1:
                         opponent.update(rel_pos, state)
-                    if state==2:
-                        pygame.mixer.music.load('assets/sound/hit.mp3')
-                        pygame.mixer.music.play(0)
-                    if state==3:
-                        pygame.mixer.music.load('assets/sound/miss.mp3')
-                        pygame.mixer.music.play(0)
+                        
+                    if state == c.Grid.SHIP_HIT:
+                        sound.play_sound("hit")
+                    elif state == c.Grid.MISSED:
+                        sound.play_sound("miss")
+                        
                 else:
                     warn(f"Unknown mouse button. State of buttons: {buttons}")
                     continue
@@ -460,10 +454,7 @@ def display():
                 unplaced.clear()
 
                 checkUnplaced()
-
-
-        # Blank the screen
-        #screen.fill(c.Colors.BLACK)
+                
         backgroundNew = pygame.transform.scale(background, WINDOW_SIZE)
         screen.blit(backgroundNew, (0,0))
 
@@ -488,57 +479,39 @@ def display():
         # Draw the ships (if any) that still need to be dragged into the grid
         for key in unplaced:
             if key == "carrier":
-                #print(unplaced[key][0]," ",unplaced[key][1])
-                #pygame.draw.rect(screen, c.Colors.SHIP2, unplaced[key])
-
                 for i in range(5):
                     if dragRotate:
                         screen.blit(watermelonSprite, (int(unplaced["carrier"][0])+i*c.Drawing.SIZE, int(unplaced["carrier"][1])))
                     else:
                         screen.blit(watermelonSprite, (int(unplaced["carrier"][0]), int(unplaced["carrier"][1])+i*c.Drawing.SIZE))
                 
-            elif key == "battleship":
-                #pygame.draw.rect(screen, c.Colors.SHIP1, unplaced[key])
-                
+            elif key == "battleship":              
                 for i in range(4):
                     if dragRotate:
                         screen.blit(appleSprite, (int(unplaced["battleship"][0])+i*c.Drawing.SIZE, int(unplaced["battleship"][1])))
                     else:
                         screen.blit(appleSprite, (int(unplaced["battleship"][0]), int(unplaced["battleship"][1])+i*c.Drawing.SIZE))
-
-                #screen.blit(appleSprite, (int(unplaced[key][0]), int(unplaced[key][1])))
                 
-            elif key == "cruiser1":
-                #pygame.draw.rect(screen, c.Colors.SHIP3, unplaced[key])
-                
+            elif key == "cruiser1":                
                 for i in range(3):
                     if dragRotate:
                         screen.blit(orangeSprite, (int(unplaced["cruiser1"][0])+i*c.Drawing.SIZE, int(unplaced["cruiser1"][1])))
                     else:
                         screen.blit(orangeSprite, (int(unplaced["cruiser1"][0]), int(unplaced["cruiser1"][1])+i*c.Drawing.SIZE))
-                #screen.blit(orangeSprite, (int(unplaced[key][0]), int(unplaced[key][1])))
                 
             elif key == "cruiser2":
-                #pygame.draw.rect(screen, c.Colors.SHIP3, unplaced[key])
-                
                 for i in range(3):
                     if dragRotate:
                         screen.blit(orangeSprite, (int(unplaced["cruiser2"][0])+i*c.Drawing.SIZE, int(unplaced["cruiser2"][1])))
                     else:
                         screen.blit(orangeSprite, (int(unplaced["cruiser2"][0]), int(unplaced["cruiser2"][1])+i*c.Drawing.SIZE))
-                #screen.blit(orangeSprite, (int(unplaced[key][0]), int(unplaced[key][1])))
                 
-            elif key == "patrol":
-                #pygame.draw.rect(screen, c.Colors.SHIP4, unplaced[key])
-                
+            elif key == "patrol":               
                 for i in range(2):
                     if dragRotate:
                         screen.blit(strawberrySprite, (int(unplaced["patrol"][0])+i*c.Drawing.SIZE, int(unplaced["patrol"][1])))
                     else:
                         screen.blit(strawberrySprite, (int(unplaced["patrol"][0]), int(unplaced["patrol"][1])+i*c.Drawing.SIZE))
-                #screen.blit(strawberrySprite, (int(unplaced[key][0]), int(unplaced[key][1])))
-                
-            #pygame.draw.rect(screen, c.Colors.SHIP, unplaced[key]) #SHIPCOLOR
 
         # Render ("flip") the display
         clock.tick(1000)
@@ -600,13 +573,12 @@ def drawGrid(grid, offset=False):
     strawberrySprite = pygame.transform.scale(strawberry, (int(size), int(size)))
     watermelonSprite = pygame.transform.scale(watermelon, (int(size), int(size)))
     splatterSprite = pygame.transform.scale(splatter, (int(size), int(size)))
-    #backgroundNew = pygame.transform.scale(background, (int(size), int(size)))
 
     for row in range(c.Drawing.SQUARES):
         for col in range(c.Drawing.SQUARES):
             mapping = {
                 c.Grid.EMPTY: c.Colors.WATER,
-                c.Grid.SHIP1: c.Colors.SHIP1, #SHIPCOLOR
+                c.Grid.SHIP1: c.Colors.SHIP1,
                 c.Grid.SHIP2: c.Colors.SHIP2,
                 c.Grid.SHIP3: c.Colors.SHIP3,
                 c.Grid.SHIP4: c.Colors.SHIP4,
@@ -640,12 +612,8 @@ def drawGrid(grid, offset=False):
                 screen.blit(orangeSprite, (xCoord, yCoord))
             elif state == c.Grid.SHIP4:
                 screen.blit(strawberrySprite, (xCoord, yCoord))
-            #elif state == c.Grid.EMPTY:
-            #    screen.blit(backgroundNew, (xCoord, yCoord))
 
-# TODO: replace with proper logging library
 def warn(msg):
     print(f"[WRN] {msg}")
 
-#setup()
 main_menu()

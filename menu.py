@@ -20,8 +20,9 @@ client = None
 opponentId = ""
 doGameLoop = True
 
-#set display size
+# Set display size
 WINDOW_SIZE = (900, 620)
+
 screen = pygame.display.set_mode(WINDOW_SIZE,0,32)
 #get image
 background_image = pygame.image.load("assets/background1.jpg")
@@ -86,7 +87,7 @@ def soundSettings():
         if update:
             pygame.draw.rect(screen, (0,0,0), (348, 0, 204, 54))
             pygame.draw.rect(screen, (25, 130, 227), (350, 2, 200, 50))
-            draw_text("Now "+new, (0,0,0), screen, 450, 27)
+            draw_text(new, (0,0,0), screen, 450, 27)
             timer += 1
             
         if (timer == 50):
@@ -168,14 +169,13 @@ def setupMenu():
     global screen, background_image
 
     pygame.mixer.init()
-    pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
+    pygame.mixer.music.load("assets/sound/mainmenu_bg.wav")
     pygame.mixer.music.set_endevent(QUIT)
     pygame.mixer.music.play()
     restoreVolume()
 
     screen = pygame.display.set_mode(WINDOW_SIZE, 0, 32)
     background_image = pygame.image.load("assets/background1.jpg")
-    background_image = pygame.transform.scale(background_image, WINDOW_SIZE)
+    background_image = pygame.transform.scale(background_image, WINDOW_SIZE)    
 
-setupMenu()     
-
+setupMenu()
