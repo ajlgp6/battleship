@@ -49,7 +49,7 @@ def main_menu():
 	pygame.display.set_caption('Battleship')
 
 	#background music to play over menu
-	pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
+	pygame.mixer.music.load("assets/sound/mainmenu_bg.wav")
 	pygame.mixer.music.set_endevent(QUIT)
 	pygame.mixer.music.play(-1)
 

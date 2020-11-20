@@ -151,7 +151,7 @@ def setupMenu():
 	global screen, background_image
 
 	pygame.mixer.init()
-	pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
+	pygame.mixer.music.load("assets/sound/mainmenu_bg.wav")
 	pygame.mixer.music.set_endevent(QUIT)
 	pygame.mixer.music.play()
 	restoreVolume()
