@@ -113,8 +113,8 @@ class Server:
             elif command[0] == "stats":
                 opponentReady = "wait"
                 opponent = None
-                opponentShips = 0
-                ourShips = 0
+                opponentShips = 5
+                ourShips = 5
 
                 # First number: is the opponent ready?
                 try:
@@ -128,13 +128,13 @@ class Server:
                 if opponentReady == "ready":
                     # Second number: number of opponent ships still afloat
                     for ship in opponent.grid.ships:
-                        if ship.isAlive():
-                            opponentShips += 1
+                        if not ship.isAlive():
+                            opponentShips -= 1
 
                     # Third number: number of our ships still afloat
                     for ship in grid.ships:
-                        if ship.isAlive():
-                            ourShips += 1
+                        if not ship.isAlive():
+                            ourShips -= 1
 
                 self.send(f"{opponentReady},{opponentShips},{ourShips}", address)
 
@@ -320,7 +320,7 @@ class GameState:
 
         self.code = code
         if self.code == "":
-            self.code = secrets.token_hex(2)
+            self.code = "0000"
 
     def __repr__(self):
         return f"{self.code}: {self.grid.ships}"

@@ -16,6 +16,8 @@ chooseAI = False
 bothAI = False
 smart_AI = False
 smart_AI2 = False
+aiInGame = False
+lastGrid = ""
 
 #music setup
 pygame.mixer.init()
@@ -204,7 +206,7 @@ def AIselection():
         clock.tick(60)
         
 def AIdifficult():
-    global smart_AI, bothAI
+    global smart_AI, aiInGame
 
     running = True
     click = False
@@ -221,6 +223,7 @@ def AIdifficult():
         
         if button_1.collidepoint((mx, my)):
             if click:
+                aiInGame = True
                 smart_AI = False
                 if bothAI:
                     AIdifficult2()
@@ -228,6 +231,7 @@ def AIdifficult():
                     setup()
         if button_2.collidepoint((mx, my)):
             if click:
+                aiInGame = True
                 smart_AI = True
                 if bothAI:
                     AIdifficult2()
@@ -235,6 +239,7 @@ def AIdifficult():
                     setup()
         if button_3.collidepoint((mx, my)):
             if click:
+                aiInGame = False
                 running = False
         
         #display of button
@@ -411,7 +416,7 @@ def displayRemaining(remaining):
         doGameLoop = False
 
 def display():
-    global screen, doGameLoop
+    global screen, doGameLoop, allPlaced
     global chooseAI, smart_AI
 
     length = 0
@@ -458,6 +463,9 @@ def display():
             # Since we need to map that to the coordinate of a square, divide the mouse coordinates by the square dimensions
             screen_pos = pygame.mouse.get_pos()
             if screen_pos[0] < grid_size:
+                if not allPlaced:
+                    continue
+
                 # The user clicked inside the placed ship grid
                 rel_pos = relativeToSquare(screen_pos)
 
@@ -607,11 +615,16 @@ def relativeToShip(point):
     return ""
 
 def refreshGrid(checkOpponent = False):
-    global grid, opponent
+    global grid, opponent, lastGrid, aiInGame
 
     client.updateGrid()
     updated = client.recv()
     grid.load(updated)
+
+    if updated != lastGrid and not aiInGame:
+        sound.play_sound("alert")
+
+    lastGrid = updated
 
     if checkOpponent:
         client.updateOpponentGrid()
