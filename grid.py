@@ -20,7 +20,14 @@ class Grid:
 
         coords = ship.getParts()
         for pair in coords:
-            self.update(pair, c.Grid.SHIP)
+            if ship.getSize() == 5:
+                self.update(pair, c.Grid.SHIP2)
+            elif ship.getSize() == 4:
+                self.update(pair, c.Grid.SHIP1)
+            elif ship.getSize() == 3:
+                self.update(pair, c.Grid.SHIP3)
+            elif ship.getSize() == 2:
+                self.update(pair, c.Grid.SHIP4)
 
     # Low level array operations
     def __getitem__(self, index):
@@ -58,7 +65,7 @@ class Grid:
             for j in range(width):
                 state = self.grid[i][j]
 
-                if hideShips and state == c.Grid.SHIP:
+                if hideShips and (state == c.Grid.SHIP1 or state == c.Grid.SHIP2 or state == c.Grid.SHIP3 or state == c.Grid.SHIP4):
                     state = c.Grid.EMPTY
                     
                 ret += f"{i},{j},{state};"

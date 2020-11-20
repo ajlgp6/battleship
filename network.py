@@ -90,7 +90,7 @@ class Server:
                     if current == c.Grid.EMPTY:
                         newState = c.Grid.MISSED
 
-                    elif current == c.Grid.SHIP:
+                    elif current == c.Grid.SHIP1 or current == c.Grid.SHIP2 or current == c.Grid.SHIP3 or current == c.Grid.SHIP4:
                         newState = c.Grid.SHIP_HIT
 
                     else:
@@ -312,7 +312,7 @@ class Client:
                 our(self.ourShips)
 
         except:
-            pass
+            pass    
 
 class GameState:
     def __init__(self, code=""):
