@@ -13,6 +13,8 @@ def debug(msg):
     print(f"[DBG] {msg}")
 
 class Server:
+    smart_AI = False
+
     def __init__(self):
         self.clients = dict()
 
@@ -111,7 +113,8 @@ class Server:
             elif command[0] == "stats":
                 opponentReady = "wait"
                 opponent = None
-                ships = 0
+                opponentShips = 0
+                ourShips = 0
 
                 # First number: is the opponent ready?
                 try:
@@ -126,11 +129,25 @@ class Server:
                     # Second number: number of opponent ships still afloat
                     for ship in opponent.grid.ships:
                         if ship.isAlive():
-                            ships += 1
+                            opponentShips += 1
 
-                self.send(f"{opponentReady},{ships}", address)
+                    # Third number: number of our ships still afloat
+                    for ship in grid.ships:
+                        if ship.isAlive():
+                            ourShips += 1
 
-            elif command[0] == "ai":
+                self.send(f"{opponentReady},{opponentShips},{ourShips}", address)
+
+            elif command[0] == "smart_ai":
+                Server.smart_AI = True
+                code = self.clients[address].code
+
+                debug(f"providing code \"{code}\"")
+                aiThread = threading.Thread(target = self.runAI, args = [code])
+                aiThread.start()
+
+            elif command[0] == "dumb_ai":
+                Server.smart_AI = False
                 code = self.clients[address].code
 
                 debug(f"providing code \"{code}\"")
@@ -166,7 +183,11 @@ class Server:
         except Exception as ex:
             print(f"AI unable to connect to self hosted server: {ex}")
 
-        ai = AI(False)
+        if(Server.smart_AI):
+            ai = AI(True)
+        else:
+            ai = AI(False)
+
         ships = ai.generate()
         for ship in ships:
             debug(f"AI placing ship at {ship}")
@@ -193,6 +214,13 @@ class Client:
     def __init__(self, server):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.address = server
+        self.ready = False
+
+        self.opponentShipsPrev = 5
+        self.opponentShips = 5
+
+        self.ourShipsPrev = 5
+        self.ourShips = 5
 
     def connect(self, code):
         global isDebug
@@ -250,6 +278,41 @@ class Client:
 
     def updateOpponentGrid(self):
         self.send("grid-opponent")
+
+    # Requires two callback arguments for ship counts decreasing for the opponent and the player
+    def updateStats(self, opponent, our):
+        self.send("stats")
+        stats = self.recv().split(",")
+
+        if len(stats) < 1:
+            return
+
+        debug(stats)
+
+        try:
+            # Opponent ready
+            if stats[0] == "ready":
+                self.ready = True
+
+            if not self.ready:
+                return
+
+            debug(f"ship status: opp current {self.opponentShips}, prev {self.opponentShipsPrev}. our current {self.ourShips}, prev {self.ourShipsPrev}")
+
+            # Numbers 2 and 3 are (respectively) the number of opponent ships and our ships remaining
+            self.opponentShips = int(stats[1])
+            self.ourShips = int(stats[2])
+
+            if self.opponentShips < self.opponentShipsPrev:
+                self.opponentShipsPrev = self.opponentShips
+                opponent(self.opponentShips)
+            
+            if self.ourShips < self.ourShipsPrev:
+                self.ourShipsPrev = self.ourShips
+                our(self.ourShips)
+
+        except:
+            pass    
 
 class GameState:
     def __init__(self, code=""):

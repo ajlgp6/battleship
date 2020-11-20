@@ -18,7 +18,6 @@ class Colors:
 
 class Grid:
     EMPTY = 0
-    #SHIP = 1
     SHIP1 = 1
     SHIP2 = 4
     SHIP3 = 5

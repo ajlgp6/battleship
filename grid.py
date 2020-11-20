@@ -21,13 +21,13 @@ class Grid:
         coords = ship.getParts()
         for pair in coords:
             if ship.getSize() == 5:
-                self.update(pair, c.Grid.SHIP2) #SHIPGRID
+                self.update(pair, c.Grid.SHIP2)
             elif ship.getSize() == 4:
-                self.update(pair, c.Grid.SHIP1) #SHIPGRID
+                self.update(pair, c.Grid.SHIP1)
             elif ship.getSize() == 3:
-                self.update(pair, c.Grid.SHIP3) #SHIPGRID
+                self.update(pair, c.Grid.SHIP3)
             elif ship.getSize() == 2:
-                self.update(pair, c.Grid.SHIP4) #SHIPGRID
+                self.update(pair, c.Grid.SHIP4)
 
     # Low level array operations
     def __getitem__(self, index):
@@ -43,10 +43,10 @@ class Grid:
         y = index[1]
         self.grid[x][y] = newState
 
-        if newState == c.Grid.SHIP_HIT: #SHIPGRID
+        if newState == c.Grid.SHIP_HIT:
            for ship in self.ships:
                if ship.hasSquare(index):
-                    print(f"Hit on ship {ship.getID()} of length {ship.getSize()} at {index}")
+                    #print(f"Hit on ship {ship.getID()} of length {ship.getSize()} at {index}")
                     ship.damaged += 1
 
     # Serialization
@@ -66,7 +66,7 @@ class Grid:
             for j in range(width):
                 state = self.grid[i][j]
 
-                if hideShips and (state == c.Grid.SHIP1 or state == c.Grid.SHIP2 or state == c.Grid.SHIP3 or state == c.Grid.SHIP4): #SHIPGRID
+                if hideShips and (state == c.Grid.SHIP1 or state == c.Grid.SHIP2 or state == c.Grid.SHIP3 or state == c.Grid.SHIP4):
                     state = c.Grid.EMPTY
                     
                 ret += f"{i},{j},{state};"
