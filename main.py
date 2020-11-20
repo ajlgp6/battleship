@@ -15,6 +15,7 @@ clock = pygame.time.Clock()
 chooseAI = False
 bothAI = False
 smart_AI = False
+smart_AI2 = False
 
 #music setup
 pygame.mixer.init()
@@ -155,6 +156,10 @@ def AIselection():
         button_3 = pygame.Rect(50, 300, 200, 50)
         button_4 = pygame.Rect(50, 400, 200, 50)
         
+        if button_1.collidepoint((mx, my)):
+            if click:
+                chooseAI = True
+                AIdifficult2()
         if button_2.collidepoint((mx, my)):
             if click:
                 chooseAI = True
@@ -199,7 +204,7 @@ def AIselection():
         clock.tick(60)
         
 def AIdifficult():
-    global smart_AI
+    global smart_AI, bothAI
 
     running = True
     click = False
@@ -217,10 +222,73 @@ def AIdifficult():
         if button_1.collidepoint((mx, my)):
             if click:
                 smart_AI = False
-                setup()
+                if bothAI:
+                    AIdifficult2()
+                else:
+                    setup()
         if button_2.collidepoint((mx, my)):
             if click:
                 smart_AI = True
+                if bothAI:
+                    AIdifficult2()
+                else:
+                    setup()
+        if button_3.collidepoint((mx, my)):
+            if click:
+                running = False
+        
+        #display of button
+        pygame.draw.rect(screen, (0, 0, 0), (48, 98, 204, 54))
+        pygame.draw.rect(screen, (25, 70, 227), button_1)
+        pygame.draw.rect(screen, (0, 0, 0), (48, 198, 204, 54))
+        pygame.draw.rect(screen, (25, 70, 227), button_2)
+        pygame.draw.rect(screen, (0, 0, 0), (48, 298, 204, 54))
+        pygame.draw.rect(screen, (25, 70, 227), button_3)
+
+        #on top because after the display of button
+        draw_text('Easy AI', (0,0,0), screen, 150, 125)
+        draw_text('Hard AI', (0,0,0), screen, 150, 225)
+        draw_text('Back', (0,0,0), screen, 150, 325)
+
+        click = False
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+
+        pygame.display.update()
+        clock.tick(60)
+        
+def AIdifficult2():
+    global smart_AI2
+
+    running = True
+    click = False
+    while running:
+        pygame.display.set_mode(WINDOW_SIZE,0,32)
+        screen.blit(background_image, (0,0))
+        #get mouse position
+        mx, my = pygame.mouse.get_pos()
+        
+        #creating button
+        button_1 = pygame.Rect(50, 100, 200, 50)
+        button_2 = pygame.Rect(50, 200, 200, 50)
+        button_3 = pygame.Rect(50, 300, 200, 50)
+        
+        if button_1.collidepoint((mx, my)):
+            if click:
+                smart_AI2 = False
+                setup()
+        if button_2.collidepoint((mx, my)):
+            if click:
+                smart_AI2 = True
                 setup()
         if button_3.collidepoint((mx, my)):
             if click:
@@ -254,7 +322,6 @@ def AIdifficult():
 
         pygame.display.update()
         clock.tick(60)
-
 
 def setup():
     global screen, grid_size
