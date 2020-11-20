@@ -1,13 +1,13 @@
-##Includes function for dealing with sound effects
+# Includes function for dealing with sound effects
 
 import os
 import pygame
 
 main_dir = os.path.split(os.path.abspath(__file__))[0]
 
-def load_sound(file):
-    ##Loads a sound file into a Sound object
-    file = os.path.join(main_dir, "data", file)
+# Input passed to this function must be from a trusted source
+def play_sound(file):
+    file = os.path.join(main_dir, "assets/sound", f"{file}.wav")
 
     sound = pygame.mixer.Sound(file)
-    return sound
+    sound.play()

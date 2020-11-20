@@ -1,6 +1,7 @@
 import pygame, sys, time, threading
 import consts as c
 from menu import soundSettings
+import sound
 from pygame.locals import *
 
 from network import Client
@@ -290,6 +291,7 @@ def opponentDecreased(remaining):
 
     if client.opponentShipsPrev == 0:
         print("You win!")
+        sound.play_sound("victory")
 
     displayRemaining(remaining)
 
@@ -298,6 +300,7 @@ def weDecreased(remaining):
 
     if client.ourShipsPrev == 0:
         print("You lose.")
+        sound.play_sound("loss")
 
     displayRemaining(remaining)
 
@@ -360,15 +363,15 @@ def display():
 
                 if isLeft:
                     state = client.fire(rel_pos)
+                    
                     if state != -1:
                         opponent.update(rel_pos, state)
 
-                    if state==2:
-                        pygame.mixer.music.load('assets/sound/hit.mp3')
-                        pygame.mixer.music.play(0)
-                    if state==3:
-                        pygame.mixer.music.load('assets/sound/miss.mp3')
-                        pygame.mixer.music.play(0)
+                    if state == c.Grid.SHIP_HIT:
+                        sound.play_sound("hit")
+                    elif state == c.Grid.MISSED:
+                        sound.play_sound("miss")
+
                 else:
                     warn(f"Unknown mouse button. State of buttons: {buttons}")
                     continue
