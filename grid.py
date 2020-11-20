@@ -40,7 +40,6 @@ class Grid:
            for ship in self.ships:
                if ship.hasSquare(index):
                     ship.damaged += 1
-                    # print(f"Hit on ship {ship}")
 
     # Serialization
     def load(self, state):

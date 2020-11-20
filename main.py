@@ -63,18 +63,11 @@ def main_menu():
 
 		#creating button
 		button_1 = pygame.Rect(50, 100, 200, 50)
-		#button_2 = pygame.Rect(50, 200, 200, 50)
 		button_3 = pygame.Rect(50, 200, 200, 50)
 		button_4 = pygame.Rect(50, 300, 200, 50)
 		if button_1.collidepoint((mx, my)):
 			if click:
-				#setup()
-				#pygame.mixer.music.set_volume(0.5)
 				AIselection()
-		#if button_2.collidepoint((mx, my)):
-			#if click:
-				#draw_text('Game Settings', (0,0,0), screen, 220, 220)
-				#gameSettings()
 		if button_3.collidepoint((mx, my)):
 			if click:
 				draw_text('Sound Settings', (0,0,0), screen, 220, 220)
@@ -87,8 +80,6 @@ def main_menu():
 		#display of button
 		pygame.draw.rect(screen, (0, 0, 0), (48, 98, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_1)
-		#pygame.draw.rect(screen, (0, 0, 0), (48, 198, 204, 54))
-		#pygame.draw.rect(screen, (25, 70, 227), button_2)
 		pygame.draw.rect(screen, (0, 0, 0), (48, 198, 204, 54))
 		pygame.draw.rect(screen, (25, 70, 227), button_3)
 		pygame.draw.rect(screen, (0, 0, 0), (48, 298, 204, 54))
@@ -96,7 +87,6 @@ def main_menu():
 
 		#on top because after the display of button
 		draw_text('Play', (0,0,0), screen, 150, 125)
-		#draw_text('Game Settings', (0,0,0), screen, 150, 225)
 		draw_text('Sound Settings', (0,0,0), screen, 150, 225)
 		draw_text('Quit', (0,0,0), screen, 150, 325)
 
@@ -132,15 +122,9 @@ def AIselection():
 		button_3 = pygame.Rect(50, 300, 200, 50)
 		button_4 = pygame.Rect(50, 400, 200, 50)
 		
-		#if button_1.collidepoint((mx, my)):
-			#if click:
-				#bothAI = True
-				#setup()
-				#AIdifficult()
 		if button_2.collidepoint((mx, my)):
 			if click:
 				chooseAI = True
-				#setup()
 				AIdifficult()
 		if button_3.collidepoint((mx, my)):
 			if click:
@@ -435,12 +419,6 @@ def display():
 
                 checkUnplaced()
 
-            #elif pressed[pygame.K_a]:
-                #client.send("ai")
-        #if (chooseAI):
-        	#client.send("ai")
-        	#chooseAI = False
-
         # Blank the screen
         screen.fill(c.Colors.BLACK)
 
@@ -537,5 +515,4 @@ def drawGrid(grid, offset=False):
 def warn(msg):
     print(f"[WRN] {msg}")
 
-#setup()
 main_menu()

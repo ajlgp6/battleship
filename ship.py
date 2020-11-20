@@ -32,14 +32,12 @@ class Ship:
             diff = end[0] - start[0]
             for i in range(diff + 1):
                 p = (start[0] + i, start[1])
-                # print(f"adding {p} to vertical ship from {self.start} to {self.end}")
                 self.parts.append(p)
         
         else:
             diff = end[1] - start[1]
             for i in range(diff + 1):
                 p = (start[0], start[1] + i)
-                # print(f"adding {p} to NOT vertical ship from {self.start} to {self.end}")
                 self.parts.append(p)
 
         self.size = len(self.parts)
