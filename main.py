@@ -17,9 +17,6 @@ smart_AI = False
 
 #music setup
 pygame.mixer.init()
-pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
-pygame.mixer.music.set_endevent(QUIT)
-pygame.mixer.music.play()
 
 # Data for ships that aren't placed
 unplaced = dict()
@@ -49,6 +46,11 @@ def draw_text(text, color, surface, x, y):
 def main_menu():
 	pygame.init()
 	pygame.display.set_caption('Battleship')
+
+	#background music to play over menu
+	pygame.mixer.music.load("assets/sound/mainmenu_bg.mp3")
+	pygame.mixer.music.set_endevent(QUIT)
+	pygame.mixer.music.play(-1)
 
 	click = False
 	
@@ -329,6 +331,8 @@ def display():
     dragging = ""       # the ship name that is currently being dragged
     dragRotate = False  # if the current ship has been rotated
 
+    pygame.mixer.music.stop()
+
     while doGameLoop:
         event = pygame.event.poll()
 
@@ -374,6 +378,13 @@ def display():
                     state = client.fire(rel_pos)
                     if state != -1:
                         opponent.update(rel_pos, state)
+
+                    if state==2:
+                        pygame.mixer.music.load('assets/sound/hit.mp3')
+                        pygame.mixer.music.play(0)
+                    if state==3:
+                        pygame.mixer.music.load('assets/sound/miss.mp3')
+                        pygame.mixer.music.play(0)
                 else:
                     warn(f"Unknown mouse button. State of buttons: {buttons}")
                     continue
